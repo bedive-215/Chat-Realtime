@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } from './envConf.js';
+import { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } from '../helpers/env.helper.js';
 
 console.log(DB_NAME);
 

@@ -1,4 +1,4 @@
-import { updateProfile as profileService } from "../services/profile.service";
+import { updateProfile as profileService } from "../services/profile.service.js";
 
 export const updateProfile = async (req, res) => {
     const { error, result } = await profileService(req.user, req.body);

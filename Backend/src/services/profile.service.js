@@ -5,8 +5,8 @@ const { User } = models;
 
 export const updateProfile = async (user, body) => {
     try {
-        const { profilePic } = body;
-        if (!profilePic) {
+        const { avatar } = body;
+        if (!avatar) {
             return {
                 error: {
                     code: 400,
@@ -16,7 +16,7 @@ export const updateProfile = async (user, body) => {
             };
         }
 
-        const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+        const uploadResponse = await cloudinary.uploader.upload(avatar, {
             folder: "avatars"
         });
 

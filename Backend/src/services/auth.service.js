@@ -1,7 +1,7 @@
 import bcryptjs, { hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { generateAccessToken, generateRefreshToken } from "../helpers/token.helper.js";
-import models from '../../models/index.js';
+import models from '../models/index.js';
 import { registationValidate, signInValidate } from "../validators/auth.validator.js";
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';

@@ -3,6 +3,6 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.post('/updata-profile', updateProfile);
+router.post('/update-profile', updateProfile);
 
 export default router;

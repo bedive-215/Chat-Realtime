@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import { ACCESS_TOKEN_SECRET, 
         REFRESH_TOKEN_SECRET, 
         ACCESS_TOKEN_EXPIRES_IN, 
-        REFRESH_TOKEN_EXPIRES_IN } from './env.helper';
+        REFRESH_TOKEN_EXPIRES_IN } from './env.helper.js';
 
-if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET || !RESET_PASSWORD_TOKEN_SECRET) {
+if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET ) {
     throw new Error("Missing required token secrets in environment variables.");
 }
 

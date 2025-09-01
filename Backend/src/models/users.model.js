@@ -26,6 +26,11 @@ export default (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    profile_avatar: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      default: ""
+    }
   }, {
     tableName: 'users',
     timestamps: true,

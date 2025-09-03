@@ -23,5 +23,6 @@ export const {
     REFRESH_TOKEN_EXPIRES_IN,
     NODE_ENV,
     REDIS_HOST,
-    REDIS_PORT
+    REDIS_PORT,
+    PORT
 } = process.env;

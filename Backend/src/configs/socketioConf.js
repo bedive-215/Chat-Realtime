@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import redis from "./redisConf.js";
+import { getFriends } from "../controllers/friend.controller.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -23,15 +24,29 @@ async function setUserOffline(userId) {
 }
 
 async function getUserOnline() {
-    
+  const onlineFriends = await redis.sinter(`friends:${userId}`, "online_users");
+  return onlineFriends;
 }
 
 io.on("connection", (socket) => {
-    console.log("A user connected", socket.id);
-    const userId = socket.handshake.query.userId;
-    if(userId) setUserOnline(userId);
+  console.log("A user connected", socket.id);
 
-    io.emit()
-})
+  const userId = socket.handshake.query.userId;
+
+  if (userId) {
+    setUserOnline(userId);
+    getUserOnline(userId).then((friends) => {
+      socket.emit("getUserOnline", friends);
+    });
+  }
+
+  socket.on("disconnect", async () => {
+    console.log("A user disconnected", socket.id);
+    await setUserOffline(userId);
+
+    io.emit("getUserOnline", await getUserOnline(userId));
+  });
+});
+
 
 export { io, app, server };

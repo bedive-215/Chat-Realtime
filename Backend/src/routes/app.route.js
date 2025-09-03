@@ -2,7 +2,6 @@ import { Router } from "express";
 import routerAuth from './auth.route.js';
 import routerProfile from './profile.route.js';
 import routerFriend from './friend.route.js';
-import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

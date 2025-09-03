@@ -15,6 +15,16 @@ export default {
             };
         }
 
+        const key = `friends:${userId}`;
+
+        // Ưu tiên lấy từ cache
+        const friendIds = await redis.sMembers(key);
+
+        if (friendIds.length > 0) {
+            return { result: friendIds.map(id => ({ id })) };
+        }
+
+        // Nếu không có trong cache -> fallback DB
         const friends = await Friend.findAll({
             where: {
                 status: "accepted",
@@ -29,18 +39,19 @@ export default {
             ]
         });
 
-        // Map thành danh sách user bạn bè
         const friendList = friends.map(f => {
-            if (f.requester_id === userId) {
-                return f.receiver; // người còn lại
-            } else {
-                return f.requester;
-            }
+            return f.requester_id === userId ? f.receiver : f.requester;
         });
 
-        return {
-            result: friendList
-        };
+        // Cập nhật lại cache
+        if (friendList.length > 0) {
+            const pipeline = redis.multi();
+            pipeline.sAdd(key, ...friendList.map(f => f.id));
+            pipeline.expire(key, 60 * 60 * 24 * 3);
+            await pipeline.exec();
+        }
+
+        return { result: friendList };
     },
 
     async getFriendRequests(userId) {
@@ -56,8 +67,8 @@ export default {
 
         const requests = await Friend.findAll({
             where: {
-                receiver_id: userId,     // bạn là người nhận
-                status: "pending"        // chỉ lấy lời mời chưa chấp nhận
+                receiver_id: userId,
+                status: "pending"
             },
             include: [
                 {
@@ -136,6 +147,20 @@ export default {
         request.status = "accepted";
         await request.save();
 
+        // Cập nhật cache cho cả 2 phía
+        const keys = [`friends:${userId}`, `friends:${requesterId}`];
+
+        for (const key of keys) {
+            const exists = await redis.exists(key);
+            if (exists) {
+                await redis.sAdd(key, key === `friends:${userId}` ? requesterId : userId);
+                await redis.expire(key, 60 * 60 * 24 * 3); // reset TTL
+            } else {
+                // Cache chưa tồn tại thì rebuild từ DB
+                await this.getFriends(key.split(":")[1]);
+            }
+        }
+
         return { result: request };
     },
 
@@ -196,6 +221,20 @@ export default {
         }
 
         await friendship.destroy();
+
+        const keys = [`friends:${userId}`, `friends:${friendId}`];
+
+        for (const key of keys) {
+            const exists = await redis.exists(key);
+            if (exists) {
+                await redis.sRem(key, key === `friends:${userId}` ? friendId : userId);
+                await redis.expire(key, 60 * 60 * 24 * 3); // reset TTL
+            } else {
+                await this.getFriends(key.split(":")[1]);
+            }
+        }
+
         return { result: { message: "Unfriended successfully" } };
     }
+
 };

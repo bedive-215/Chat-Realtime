@@ -1,15 +1,15 @@
-import bcryptjs, { hash } from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import bcryptjs from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from "../helpers/token.helper.js";
 import models from '../models/index.js';
 import { registationValidate, signInValidate } from "../validators/auth.validator.js";
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';
+import friendService from './friend.service.js';
 
 const { User } = models;
 
 export default {
-    // dang ky
+    // Đăng ký
     async signUp(data) {
         const { error } = registationValidate.validate(data, { abortEarly: false });
         if (error) {
@@ -57,9 +57,20 @@ export default {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
+        // Lấy danh sách bạn bè (nếu có)
+        const { result: friends } = await friendService.getFriends(user.id);
+        const friendIds = friends.map(f => f.id);
+
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
-
+        const key = `friends:${user.id}`;
+        const exists = await redis.exists(key);
+        if (friendIds.length > 0 && !exists) {
+            const pipeline = redis.multi();
+            pipeline.sAdd(key, ...friendIds);
+            pipeline.expire(key, 60 * 60 * 24 * 3);
+            await pipeline.exec();
+        }
         return {
             result: {
                 name: "UserCreated",
@@ -70,9 +81,18 @@ export default {
         };
     },
 
-    // dang nhap
+    // Đăng nhập
     async signIn(data) {
         const { error } = signInValidate.validate(data, { abortEarly: false });
+        if (error) {
+            return {
+                error: {
+                    code: 400,
+                    name: error.name,
+                    message: error.details.map(e => e.message)
+                }
+            };
+        }
 
         const login_name = data.login_name.trim();
 
@@ -116,9 +136,21 @@ export default {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
-        // Luu refresh token vao redis
+        // Lấy bạn bè và cache vào redis
+        const { result: friends } = await friendService.getFriends(user.id);
+        const friendIds = friends.map(f => f.id);
+
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
+
+        const key = `friends:${user.id}`;
+        const exists = await redis.exists(key);
+        if (friendIds.length > 0 && !exists) {
+            const pipeline = redis.multi();
+            pipeline.sAdd(key, ...friendIds);
+            pipeline.expire(key, 60 * 60 * 24 * 3);
+            await pipeline.exec();
+        }
 
         return {
             result: {
@@ -129,5 +161,4 @@ export default {
             refreshToken
         };
     },
-
 };

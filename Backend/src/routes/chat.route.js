@@ -1,4 +1,4 @@
-import { createChat, getChatId } from "../controllers/chat.controller";
+import { createChat, getChatId } from "../controllers/chat.controller.js";
 import { Router } from 'express';
 
 const router = Router();

@@ -1,6 +1,8 @@
-import models from "../models";
+import models from "../models/index.js";
 import { Op } from "sequelize";
-import createChat from './chat.service.js'
+import chatService from './chat.service.js';
+import redis from '../configs/redisConf.js';
+
 const { User, Friend } = models;
 
 export default {
@@ -15,8 +17,8 @@ export default {
 
         if (action === "accept") {
             // Update friend ID set
-            pipeline.sAdd(friendKeyUser, friendId);
-            pipeline.sAdd(friendKeyTarget, userId);
+            pipeline.sAdd(friendKeyUser, String(friendId));
+            pipeline.sAdd(friendKeyTarget, String(userId));
 
             // Lấy info từ DB
             const [user, friend] = await Promise.all([
@@ -25,18 +27,18 @@ export default {
             ]);
 
             if (user && friend) {
-                pipeline.hSet(infoKeyUser, friend.id, JSON.stringify(friend));
-                pipeline.hSet(infoKeyTarget, user.id, JSON.stringify(user));
+                pipeline.hSet(infoKeyUser, String(friend.id), JSON.stringify(friend));
+                pipeline.hSet(infoKeyTarget, String(user.id), JSON.stringify(user));
             }
 
         } else if (action === "unfriend") {
             // Remove from friend sets
-            pipeline.sRem(friendKeyUser, friendId);
-            pipeline.sRem(friendKeyTarget, userId);
+            pipeline.sRem(friendKeyUser, String(friendId));
+            pipeline.sRem(friendKeyTarget, String(userId));
 
             // Remove from info hashes
-            pipeline.hDel(infoKeyUser, friendId);
-            pipeline.hDel(infoKeyTarget, userId);
+            pipeline.hDel(infoKeyUser, String(friendId));
+            pipeline.hDel(infoKeyTarget, String(userId));
         }
 
         // TTL (7 ngày)
@@ -61,7 +63,7 @@ export default {
         const friendIds = await redis.sMembers(key);
 
         if (friendIds.length > 0) {
-            return { result: friendIds.map(id => ({ id })), source: "cache" };
+            return { result: friendIds.map(id => ({ id: Number(id) })), source: "cache" };
         }
 
         // Fallback DB
@@ -74,14 +76,14 @@ export default {
                 { model: User, as: "requester", attributes: ["id"] },
                 { model: User, as: "receiver", attributes: ["id"] }
             ],
-            order: [["createdAt", "DESC"]]
+            order: [["created_at", "DESC"]]
         });
 
         const friendList = friends.map(f => f.requester_id === userId ? f.receiver : f.requester);
 
         if (friendList.length > 0) {
             const pipeline = redis.multi();
-            pipeline.sAdd(key, ...friendList.map(f => f.id));
+            pipeline.sAdd(key, ...friendList.map(f => String(f.id)));
             pipeline.expire(key, 60 * 60 * 24 * 7);
             await pipeline.exec();
         }
@@ -119,7 +121,7 @@ export default {
                 { model: User, as: "requester", attributes: { exclude: ["password"] } },
                 { model: User, as: "receiver", attributes: { exclude: ["password"] } }
             ],
-            order: [["createdAt", "DESC"]]
+            order: [["created_at", "DESC"]]
         });
 
         const friendList = friends.map(f => f.requester_id === userId ? f.receiver : f.requester);
@@ -127,7 +129,7 @@ export default {
         if (friendList.length > 0) {
             const pipeline = redis.multi();
             friendList.forEach(friend => {
-                pipeline.hSet(key, friend.id, JSON.stringify(friend));
+                pipeline.hSet(key, String(friend.id), JSON.stringify(friend));
             });
             pipeline.expire(key, 60 * 60 * 24 * 7);
             await pipeline.exec();
@@ -196,7 +198,7 @@ export default {
 
         request.status = "accepted";
         await request.save();
-        await createChat(userId, requesterId);
+        await chatService.creatChat(userId, requesterId);
         await this.updateFriendshipCache(userId, requesterId, "accept");
         return { result: request };
     },

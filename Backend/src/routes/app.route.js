@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 import routerAuth from './auth.route.js';
 import routerProfile from './profile.route.js';
 import routerFriend from './friend.route.js';

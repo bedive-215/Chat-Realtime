@@ -59,23 +59,15 @@ export default {
 
         // Lấy danh sách bạn bè (nếu có)
         const { result: friends } = await friendService.getFriends(user.id);
-        const friendIds = friends.map(f => f.id);
-
+        
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
-        const key = `friends:${user.id}`;
-        const exists = await redis.exists(key);
-        if (friendIds.length > 0 && !exists) {
-            const pipeline = redis.multi();
-            pipeline.sAdd(key, ...friendIds);
-            pipeline.expire(key, 60 * 60 * 24 * 3);
-            await pipeline.exec();
-        }
         return {
             result: {
                 name: "UserCreated",
                 message: "Account created successfully",
                 accessToken,
+                friends
             },
             refreshToken
         };
@@ -136,29 +128,21 @@ export default {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
-        // Lấy bạn bè và cache vào redis
+        // Gọi service getFriends (tự xử lý cache/DB)
         const { result: friends } = await friendService.getFriends(user.id);
-        const friendIds = friends.map(f => f.id);
 
+        // Lưu refresh token
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
-
-        const key = `friends:${user.id}`;
-        const exists = await redis.exists(key);
-        if (friendIds.length > 0 && !exists) {
-            const pipeline = redis.multi();
-            pipeline.sAdd(key, ...friendIds);
-            pipeline.expire(key, 60 * 60 * 24 * 3);
-            await pipeline.exec();
-        }
 
         return {
             result: {
                 name: "UserLoggedIn",
                 message: "Logged in successfully",
                 accessToken,
+                friends
             },
             refreshToken
         };
-    },
+    }
 };

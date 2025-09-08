@@ -44,6 +44,10 @@ Friend.belongsTo(User, {
   as: "receiver"
 });
 
+Chat.hasMany(ChatParticipant, {
+  foreignKey: "chat_id",
+  onDelete: "CASCADE",
+});
 
 ChatParticipant.belongsTo(User, { foreignKey: "user_id" });
 ChatParticipant.belongsTo(Chat, { foreignKey: "chat_id" });

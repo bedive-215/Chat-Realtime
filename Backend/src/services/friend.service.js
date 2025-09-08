@@ -3,10 +3,9 @@ import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redis from '../configs/redisConf.js';
 
-const { User, Friend } = models;
+const { User, Friend, Chat, ChatParticipant } = models;
 
 export default {
-    // ================== Helpers ==================
     async updateFriendshipCache(userId, friendId, action) {
         const friendKeyUser = `friends:${userId}`;
         const friendKeyTarget = `friends:${friendId}`;
@@ -51,6 +50,20 @@ export default {
         await pipeline.exec();
     },
 
+    async fallBackDB(userId) {
+        const friends = await Friend.findAll({
+            where: {
+                status: "accepted",
+                [Op.or]: [{ requester_id: userId }, { receiver_id: userId }]
+            },
+            include: [
+                { model: User, as: "requester", attributes: ['id', 'username', 'profile_avatar'] },
+                { model: User, as: "receiver", attributes: ['id', 'username', 'profile_avatar'] }
+            ],
+            order: [["created_at", "DESC"]]
+        });
+        return friends;
+    },
     // ================== Lấy danh sách bạn ==================
     async getFriends(userId) {
         if (!userId) {
@@ -63,32 +76,25 @@ export default {
         const friendIds = await redis.sMembers(key);
 
         if (friendIds.length > 0) {
-            return { result: friendIds.map(id => ({ id: Number(id) })), source: "cache" };
+            return { result: friendIds.map(id => Number(id)), source: "cache" };
         }
 
         // Fallback DB
-        const friends = await Friend.findAll({
-            where: {
-                status: "accepted",
-                [Op.or]: [{ requester_id: userId }, { receiver_id: userId }]
-            },
-            include: [
-                { model: User, as: "requester", attributes: ["id"] },
-                { model: User, as: "receiver", attributes: ["id"] }
-            ],
-            order: [["created_at", "DESC"]]
-        });
+        const friends = await this.fallBackDB(userId);
 
-        const friendList = friends.map(f => f.requester_id === userId ? f.receiver : f.requester);
+        // Lấy danh sách ID bạn bè (chỉ id)
+        const friendIdsFromDB = friends.map(f =>
+            f.requester_id === userId ? f.receiver_id : f.requester_id
+        );
 
-        if (friendList.length > 0) {
+        if (friendIdsFromDB.length > 0) {
             const pipeline = redis.multi();
-            pipeline.sAdd(key, ...friendList.map(f => String(f.id)));
-            pipeline.expire(key, 60 * 60 * 24 * 7);
+            pipeline.sAdd(key, ...friendIdsFromDB.map(id => String(id)));
+            pipeline.expire(key, 60 * 60 * 24 * 7); // TTL 7 ngày
             await pipeline.exec();
         }
 
-        return { result: friendList, source: "db" };
+        return { result: friendIdsFromDB, source: "db" };
     },
 
     // ================== Lấy info bạn bè ==================
@@ -111,21 +117,49 @@ export default {
             }
         }
 
-        // Fallback DB
-        const friends = await Friend.findAll({
-            where: {
-                status: "accepted",
-                [Op.or]: [{ requester_id: userId }, { receiver_id: userId }]
-            },
-            include: [
-                { model: User, as: "requester", attributes: { exclude: ["password"] } },
-                { model: User, as: "receiver", attributes: { exclude: ["password"] } }
-            ],
-            order: [["created_at", "DESC"]]
-        });
+        // === Fallback DB ===
+        const friends = await this.fallBackDB(userId);
 
-        const friendList = friends.map(f => f.requester_id === userId ? f.receiver : f.requester);
+        const friendList = await Promise.all(
+            friends.map(async f => {
+                const friend = f.requester_id === userId ? f.receiver : f.requester;
 
+                // lấy chat riêng
+                const chat = await Chat.findOne({
+                    where: { is_group: false },
+                    include: [{
+                        model: ChatParticipant,
+                        where: { user_id: { [Op.in]: [userId, friend.id] } },
+                        required: true
+                    }]
+                });
+
+                let lastMessage = null;
+                let chatId = null;
+
+                if (chat) {
+                    const participants = await ChatParticipant.count({ where: { chat_id: chat.id } });
+                    if (participants === 2) {
+                        chatId = chat.id;
+                    }
+                }
+
+                return {
+                    ...friend.toJSON(),
+                    chatId,
+                    lastMessage: lastMessage
+                        ? {
+                            id: lastMessage.id,
+                            text: lastMessage.text,
+                            createdAt: lastMessage.created_at
+                        }
+                        : null,
+                    unreadCount: 0,
+                };
+            })
+        );
+
+        // Cache vào Redis
         if (friendList.length > 0) {
             const pipeline = redis.multi();
             friendList.forEach(friend => {
@@ -137,23 +171,6 @@ export default {
 
         return { result: friendList, source: "db" };
     },
-
-    // ================== Lấy lời mời kết bạn ==================
-    async getFriendRequests(userId) {
-        if (!userId) {
-            return {
-                error: { code: 400, name: "GetFriendRequestsError", message: "User ID is required" }
-            };
-        }
-
-        const requests = await Friend.findAll({
-            where: { receiver_id: userId, status: "pending" },
-            include: [{ model: User, as: "requester", attributes: ["id", "username", "email"] }]
-        });
-
-        return { result: requests.map(r => r.requester) };
-    },
-
     // ================== Gửi lời mời ==================
     async sendFriendRequest(userId, friendId) {
         if (!userId || !friendId) {
@@ -184,23 +201,37 @@ export default {
 
     // ================== Chấp nhận ==================
     async acceptFriendRequest(userId, requesterId) {
-        const request = await Friend.findOne({
-            where: { requester_id: requesterId, receiver_id: userId, status: "pending" },
-            include: [
-                { model: User, as: "requester", attributes: { exclude: ["password"] } },
-                { model: User, as: "receiver", attributes: { exclude: ["password"] } }
-            ]
-        });
+        const t = await sequelize.transaction();
+        try {
+            const request = await Friend.findOne({
+                where: { requester_id: requesterId, receiver_id: userId, status: "pending" },
+                include: [
+                    { model: User, as: "requester", attributes: { exclude: ["password"] } },
+                    { model: User, as: "receiver", attributes: { exclude: ["password"] } }
+                ],
+                transaction: t
+            });
 
-        if (!request) {
-            return { error: { code: 404, name: "FriendError", message: "Friend request not found" } };
+            if (!request) {
+                await t.rollback();
+                return { error: { code: 404, name: "FriendError", message: "Friend request not found" } };
+            }
+
+            request.status = "accepted";
+            await request.save({ transaction: t });
+
+            // tạo chat trong transaction
+            await chatService.createChat(userId, requesterId, t);
+
+            // update cache (nên làm sau khi commit)
+            await t.commit();
+            await this.updateFriendshipCache(userId, requesterId, "accept");
+
+            return { result: request };
+        } catch (err) {
+            await t.rollback();
+            throw err;
         }
-
-        request.status = "accepted";
-        await request.save();
-        await chatService.creatChat(userId, requesterId);
-        await this.updateFriendshipCache(userId, requesterId, "accept");
-        return { result: request };
     },
 
     // ================== Từ chối ==================

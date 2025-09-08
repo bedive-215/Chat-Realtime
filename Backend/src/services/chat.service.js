@@ -1,46 +1,58 @@
 import models from '../models/index.js';
-
+import sequelize from '../configs/databaseConf.js';
+import { Op } from 'sequelize';
+import Sequelize from 'sequelize';
 const { Chat, ChatParticipant } = models;
 
 export default {
-    async creatChat(userId, friendId) {
-        if (!friendId) {
-            throw new Error('Required params', userId, friendId);
+    async createChat(userId, friendId, transaction = null) {
+        if (!userId || !friendId) {
+            throw new Error(`Required params: userId=${userId}, friendId=${friendId}`);
         }
+
         if (userId.toString() === friendId.toString()) {
             return {
-                error: { code: 400, message: 'You cannot create a chat with yourself.' }
+                error: { code: 400, message: "You cannot create a chat with yourself." }
             };
         }
+
         try {
             const existingChat = await ChatParticipant.findAll({
                 where: {
                     user_id: { [Op.in]: [userId, friendId] }
                 },
-                attributes: ['chat_id'],
-                group: ['chat_id'],
-                having: Sequelize.literal('COUNT(DISTINCT user_id) = 2'),
+                attributes: ["chat_id"],
+                group: ["chat_id"],
+                having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
                 include: [{
                     model: Chat,
                     where: { is_group: false },
                     attributes: []
-                }]
+                }],
+                transaction
             });
-            if (existingChat.length > 0) {
-                const chat_id = existingChat[0].chat_id;
-                return { result: { message: 'Private chat already exists', chat_id } };
-            }
-            const chat = await Chat.create({ is_group: false });
-            await ChatParticipant.bulkCreate([
-                { chat_id: chat.id, user_id: userId },
-                { chat_id: chat.id, user_id: friendId }
-            ]);
 
-            const chat_id = chat.id
-            return { result: { message: 'Private chat created', chat_id } };
-        } catch {
+            if (existingChat.length > 0) {
+                const chatId = existingChat[0].chat_id;
+                return { result: { message: "Private chat already exists", chatId } };
+            }
+
+            const chat = await sequelize.transaction(async (t) => {
+                const newChat = await Chat.create({ is_group: false }, { transaction: t });
+                await ChatParticipant.bulkCreate(
+                    [
+                        { chat_id: newChat.id, user_id: userId },
+                        { chat_id: newChat.id, user_id: friendId }
+                    ],
+                    { transaction: t }
+                );
+                return newChat;
+            })
+            return { result: { message: "Private chat created", chatId: chat.id } };
+
+        } catch (error) {
             return {
-                error: { code: 500, message: 'Error creating chat', detail: error.message }
+                error: { code: 500, message: "Error creating chat", detail: error.message }
             };
         }
     },

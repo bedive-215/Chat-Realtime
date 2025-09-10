@@ -1,5 +1,6 @@
 import Message from "../models/messages.model.js";
 import { uploadBufferToCloudinary } from "../helpers/upload.helper.js";
+import redisHelper from "../helpers/redis.helper.js";
 
 export default {
     async getMessage(chatId, { limit = 20, before } = {}) {
@@ -61,9 +62,7 @@ export default {
                 image: mediaUrl,
             });
 
-            return {
-                result: newMessage.toObject ? newMessage.toObject() : newMessage,
-            };
+            return { result: newMessage.toObject ? newMessage.toObject() : newMessage };
         } catch (error) {
             console.error("Error send message:", error);
             return {

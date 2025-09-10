@@ -1,55 +1,13 @@
 import models from "../models/index.js";
+import sequelize from "../configs/databaseConf.js";
 import { Op } from "sequelize";
 import chatService from './chat.service.js';
-import redis from '../configs/redisConf.js';
+import redisHelper from "../helpers/redis.helper.js";
+import redis from "../configs/redisConf.js";
 
 const { User, Friend, Chat, ChatParticipant } = models;
 
 export default {
-    async updateFriendshipCache(userId, friendId, action) {
-        const friendKeyUser = `friends:${userId}`;
-        const friendKeyTarget = `friends:${friendId}`;
-        const infoKeyUser = `friends_info:${userId}`;
-        const infoKeyTarget = `friends_info:${friendId}`;
-
-        const pipeline = redis.multi();
-
-        if (action === "accept") {
-            // Update friend ID set
-            pipeline.sAdd(friendKeyUser, String(friendId));
-            pipeline.sAdd(friendKeyTarget, String(userId));
-
-            // Lấy info từ DB
-            const [user, friend] = await Promise.all([
-                User.findByPk(userId, { attributes: { exclude: ["password"] } }),
-                User.findByPk(friendId, { attributes: { exclude: ["password"] } })
-            ]);
-
-            if (user && friend) {
-                pipeline.hSet(infoKeyUser, String(friend.id), JSON.stringify(friend));
-                pipeline.hSet(infoKeyTarget, String(user.id), JSON.stringify(user));
-            }
-
-        } else if (action === "unfriend") {
-            // Remove from friend sets
-            pipeline.sRem(friendKeyUser, String(friendId));
-            pipeline.sRem(friendKeyTarget, String(userId));
-
-            // Remove from info hashes
-            pipeline.hDel(infoKeyUser, String(friendId));
-            pipeline.hDel(infoKeyTarget, String(userId));
-        }
-
-        // TTL (7 ngày)
-        const ttl = 60 * 60 * 24 * 7;
-        pipeline.expire(friendKeyUser, ttl);
-        pipeline.expire(friendKeyTarget, ttl);
-        pipeline.expire(infoKeyUser, ttl);
-        pipeline.expire(infoKeyTarget, ttl);
-
-        await pipeline.exec();
-    },
-
     async fallBackDB(userId) {
         const friends = await Friend.findAll({
             where: {
@@ -62,7 +20,49 @@ export default {
             ],
             order: [["created_at", "DESC"]]
         });
-        return friends;
+
+        const friendList = await Promise.all(
+            friends.map(async f => {
+                const friend = f.requester_id === userId ? f.receiver : f.requester;
+
+                // lấy chat riêng
+                const chat = await Chat.findOne({
+                    where: { is_group: false },
+                    include: [{
+                        model: ChatParticipant,
+                        where: { user_id: { [Op.in]: [userId, friend.id] } },
+                        required: true
+                    }]
+                });
+
+                let lastMessage = null;
+                let chatId = null;
+
+                if (chat) {
+                    if (chat) {
+                        chatId = chat.id;
+                        lastMessage = await Message.findOne({ chat_id: chat.id })
+                            .sort({ createdAt: -1 })
+                            .lean();
+                    }
+
+                }
+
+                return {
+                    ...friend.toJSON(),
+                    chatId,
+                    lastMessage: lastMessage
+                        ? {
+                            id: lastMessage.id,
+                            text: lastMessage.text,
+                            createdAt: lastMessage.created_at
+                        }
+                        : null,
+                    unreadCount: 0,
+                };
+            })
+        );
+        return { friends, friendList };
     },
     // ================== Lấy danh sách bạn ==================
     async getFriends(userId) {
@@ -80,7 +80,7 @@ export default {
         }
 
         // Fallback DB
-        const friends = await this.fallBackDB(userId);
+        const { friends } = await this.fallBackDB(userId);
 
         // Lấy danh sách ID bạn bè (chỉ id)
         const friendIdsFromDB = friends.map(f =>
@@ -118,46 +118,7 @@ export default {
         }
 
         // === Fallback DB ===
-        const friends = await this.fallBackDB(userId);
-
-        const friendList = await Promise.all(
-            friends.map(async f => {
-                const friend = f.requester_id === userId ? f.receiver : f.requester;
-
-                // lấy chat riêng
-                const chat = await Chat.findOne({
-                    where: { is_group: false },
-                    include: [{
-                        model: ChatParticipant,
-                        where: { user_id: { [Op.in]: [userId, friend.id] } },
-                        required: true
-                    }]
-                });
-
-                let lastMessage = null;
-                let chatId = null;
-
-                if (chat) {
-                    const participants = await ChatParticipant.count({ where: { chat_id: chat.id } });
-                    if (participants === 2) {
-                        chatId = chat.id;
-                    }
-                }
-
-                return {
-                    ...friend.toJSON(),
-                    chatId,
-                    lastMessage: lastMessage
-                        ? {
-                            id: lastMessage.id,
-                            text: lastMessage.text,
-                            createdAt: lastMessage.created_at
-                        }
-                        : null,
-                    unreadCount: 0,
-                };
-            })
-        );
+        const { friendList } = await this.fallBackDB(userId);
 
         // Cache vào Redis
         if (friendList.length > 0) {
@@ -221,11 +182,10 @@ export default {
             await request.save({ transaction: t });
 
             // tạo chat trong transaction
-            await chatService.createChat(userId, requesterId, t);
-
+            const chatId = await chatService.createChat(userId, requesterId, t);
             // update cache (nên làm sau khi commit)
             await t.commit();
-            await this.updateFriendshipCache(userId, requesterId, "accept");
+            await redisHelper.updateFriendshipCache(userId, requesterId, chatId, "accept");
 
             return { result: request };
         } catch (err) {
@@ -279,8 +239,8 @@ export default {
         }
 
         await friendship.destroy();
-        await this.updateFriendshipCache(userId, friendId, "unfriend");
+        await redisHelper.updateFriendshipCache(userId, friendId, null,"unfriend");
 
         return { result: { message: "Unfriended successfully" } };
-    }
+    },
 };

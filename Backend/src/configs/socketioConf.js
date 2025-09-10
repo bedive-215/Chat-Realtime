@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import redis from "./redisConf.js";
-import messageService from "../services/message.service.js";
+import socketHandelService from "../services/socketHandel.service.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -37,19 +37,8 @@ io.on("connection", async (socket) => {
       socket.emit("getUserOnline", friends);
     });
   }
-
-  socket.on("sendMessage", async ({ chatId, text, file }) => {
-    const { error, result } = await messageService.sendMessage(userId, chatId, text, file);
-    if (error) {
-      return socket.emit("errorMessage", error);
-    }
-    io.to(chatId.toString()).emit("newMessage", result);
-  });
-
-  socket.on("joinChat", (chatId) => {
-    socket.join(chatId.toString());
-    console.log(`User ${userId} joined chat ${chatId}`);
-  });
+  socketHandelService.joinRoom(socket, io);
+  socketHandelService.sendMessage(socket, io);
 
   socket.on("disconnect", async () => {
     console.log("A user disconnected", socket.id);

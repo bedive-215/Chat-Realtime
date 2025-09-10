@@ -1,5 +1,4 @@
 import models from '../models/index.js';
-import sequelize from '../configs/databaseConf.js';
 import { Op } from 'sequelize';
 import Sequelize from 'sequelize';
 const { Chat, ChatParticipant } = models;
@@ -17,10 +16,8 @@ export default {
         }
 
         try {
-            const existingChat = await ChatParticipant.findAll({
-                where: {
-                    user_id: { [Op.in]: [userId, friendId] }
-                },
+            const existingChat = await ChatParticipant.findOne({
+                where: { user_id: { [Op.in]: [userId, friendId] } },
                 attributes: ["chat_id"],
                 group: ["chat_id"],
                 having: Sequelize.literal("COUNT(DISTINCT user_id) = 2"),
@@ -32,24 +29,24 @@ export default {
                 transaction
             });
 
-            if (existingChat.length > 0) {
-                const chatId = existingChat[0].chat_id;
-                return { result: { message: "Private chat already exists", chatId } };
+            if (existingChat) {
+                return existingChat.chat_id;
             }
 
-            const chat = await sequelize.transaction(async (t) => {
-                const newChat = await Chat.create({ is_group: false }, { transaction: t });
-                await ChatParticipant.bulkCreate(
-                    [
-                        { chat_id: newChat.id, user_id: userId },
-                        { chat_id: newChat.id, user_id: friendId }
-                    ],
-                    { transaction: t }
-                );
-                return newChat;
-            })
-            return { result: { message: "Private chat created", chatId: chat.id } };
+            const newChat = await Chat.create(
+                { is_group: false },
+                { transaction }
+            );
 
+            await ChatParticipant.bulkCreate(
+                [
+                    { chat_id: newChat.id, user_id: userId },
+                    { chat_id: newChat.id, user_id: friendId }
+                ],
+                { transaction }
+            );
+
+            return newChat.id;
         } catch (error) {
             return {
                 error: { code: 500, message: "Error creating chat", detail: error.message }

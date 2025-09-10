@@ -12,14 +12,9 @@ redis.on("error", (error) => {
   console.error("Redis error:", error);
 });
 
-// Tự connect khi module được import
-(async () => {
-  try {
-    await redis.connect();
-    console.log("✅ Redis connected");
-  } catch (err) {
-    console.error("❌ Redis connection failed:", err);
-  }
-})();
+redis.connect()
+  .then(() => console.log("Redis connected"))
+  .catch((err) => console.error("Redis connection failed:", err));
+
 
 export default redis;

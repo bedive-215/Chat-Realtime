@@ -1,12 +1,11 @@
 import models from '../models/index.js';
-import cloudinary from '../configs/cloudinaryConf.js';
+import { uploadBufferToCloudinary } from '../helpers/upload.helper.js';
 
 const { User } = models;
 
-export const updateProfile = async (user, body) => {
+export const updateProfile = async (user, file) => {
     try {
-        const { avatar } = body;
-        if (!avatar) {
+        if (!file) {
             return {
                 error: {
                     code: 400,
@@ -16,29 +15,19 @@ export const updateProfile = async (user, body) => {
             };
         }
 
-        const uploadResponse = await cloudinary.uploader.upload(avatar, {
-            folder: "avatars"
-        });
-
-        // update trong db
-        const [affected] = await User.update(
-            { profile_avatar: uploadResponse.secure_url },
-            { where: { id: user.id } }
-        );
-
-        if (affected === 0) {
+        const uploadResponse = await uploadBufferToCloudinary(file.buffer, 'avatars');
+        const authUser = await User.findByPk(user.id);
+        if (!authUser) {
             return {
-                error: {
-                    code: 404,
-                    name: "UserNotFound",
-                    message: "User not found"
-                }
+                error: { code: 404, name: "UserNotFound", message: "User not found" }
             };
         }
 
-        // lấy lại user sau khi update
+        authUser.profile_avatar = uploadResponse;
+        await authUser.save();
+
         const updatedUser = await User.findOne({
-            where: { id: user.id },
+            where: { id: authUser.id },
             attributes: ["id", "username", "profile_avatar"]
         });
 

@@ -1,15 +1,15 @@
-import bcryptjs, { hash } from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import bcryptjs from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from "../helpers/token.helper.js";
 import models from '../models/index.js';
 import { registationValidate, signInValidate } from "../validators/auth.validator.js";
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';
+import friendService from './friend.service.js';
 
 const { User } = models;
 
 export default {
-    // dang ky
+    // Đăng ký
     async signUp(data) {
         const { error } = registationValidate.validate(data, { abortEarly: false });
         if (error) {
@@ -57,22 +57,34 @@ export default {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
+        // Lấy danh sách bạn bè (nếu có)
+        const { result: friends } = await friendService.getFriends(user.id);
+        
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
-
         return {
             result: {
                 name: "UserCreated",
                 message: "Account created successfully",
                 accessToken,
+                friends
             },
             refreshToken
         };
     },
 
-    // dang nhap
+    // Đăng nhập
     async signIn(data) {
         const { error } = signInValidate.validate(data, { abortEarly: false });
+        if (error) {
+            return {
+                error: {
+                    code: 400,
+                    name: error.name,
+                    message: error.details.map(e => e.message)
+                }
+            };
+        }
 
         const login_name = data.login_name.trim();
 
@@ -116,7 +128,10 @@ export default {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
-        // Luu refresh token vao redis
+        // Gọi service getFriends (tự xử lý cache/DB)
+        const { result: friends } = await friendService.getFriends(user.id);
+
+        // Lưu refresh token
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
 
@@ -125,9 +140,9 @@ export default {
                 name: "UserLoggedIn",
                 message: "Logged in successfully",
                 accessToken,
+                friends
             },
             refreshToken
         };
-    },
-
+    }
 };

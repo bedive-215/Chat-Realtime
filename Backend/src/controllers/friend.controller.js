@@ -11,6 +11,17 @@ export const getFriends = async (req, res) => {
   }
 };
 
+export const getFriendsInfo = async (req, res) => {
+  try {
+    const { error, result } = await FriendService.getFriendsInfo(req.user.id);
+    if (error) return res.status(error.code || 400).json(error);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("getFriends controller error:", err);
+    return res.status(500).json({ code: 500, name: "ServerError", message: "Internal server error" });
+  }
+};
+
 export const getFriendRequests = async (req, res) => {
   try {
     const { error, result } = await FriendService.getFriendRequests(req.user.id);

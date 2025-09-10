@@ -5,11 +5,14 @@ import { getFriends,
     acceptFriendRequest,  
     rejectFriendRequest, 
     cancelFriendRequest, 
-    unfriend } from '../controllers/friend.controller';
+    unfriend,
+    getFriendsInfo
+ } from '../controllers/friend.controller.js';
 
 const router = Router();
 
 router.get("/friends", getFriends);
+router.get('/friends-info', getFriendsInfo);
 router.get("/friends/requests", getFriendRequests);
 router.post("/friends/request/:friendId", sendFriendRequest);
 router.post("/friends/accept/:requesterId", acceptFriendRequest);

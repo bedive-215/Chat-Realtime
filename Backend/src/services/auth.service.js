@@ -5,6 +5,7 @@ import { registationValidate, signInValidate } from "../validators/auth.validato
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';
 import friendService from './friend.service.js';
+import { create } from 'domain';
 
 const { User } = models;
 
@@ -54,6 +55,8 @@ export default {
             phone_number: user.phone_number
         };
 
+        const result = {...payload, profile_avatar: user.profile_avatar, created_at: user.created_at}
+
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
@@ -67,7 +70,8 @@ export default {
                 name: "UserCreated",
                 message: "Account created successfully",
                 accessToken,
-                friends
+                friends,
+                user: result
             },
             refreshToken
         };
@@ -125,6 +129,7 @@ export default {
             phone_number: user.phone_number
         };
 
+        const result = {...payload, profile_avatar: user.profile_avatar, created_at: user.created_at};
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
@@ -134,13 +139,13 @@ export default {
         // Lưu refresh token
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
-
         return {
             result: {
                 name: "UserLoggedIn",
                 message: "Logged in successfully",
                 accessToken,
-                friends
+                friends,
+                user: result
             },
             refreshToken
         };

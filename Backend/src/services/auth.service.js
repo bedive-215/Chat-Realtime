@@ -5,6 +5,7 @@ import { registationValidate, signInValidate } from "../validators/auth.validato
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';
 import friendService from './friend.service.js';
+import { create } from 'domain';
 
 const { User } = models;
 
@@ -54,7 +55,7 @@ export default {
             phone_number: user.phone_number
         };
 
-        const result = {...payload, profile_avatar: user.profile_avatar}
+        const result = {...payload, profile_avatar: user.profile_avatar, created_at: user.created_at}
 
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
@@ -128,7 +129,7 @@ export default {
             phone_number: user.phone_number
         };
 
-        const result = {...payload, profile_avatar: user.profile_avatar};
+        const result = {...payload, profile_avatar: user.profile_avatar, created_at: user.created_at};
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 

@@ -28,7 +28,7 @@ export const updateProfile = async (user, file) => {
 
         const updatedUser = await User.findOne({
             where: { id: authUser.id },
-            attributes: ["id", "username", "profile_avatar"]
+            attributes: ["id", "username", "phone_number","profile_avatar", "created_at"]
         });
 
         return {

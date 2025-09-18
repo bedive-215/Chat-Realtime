@@ -30,6 +30,7 @@ export default {
                 result: {
                     name: "MessagesFetched",
                     message: "Messages retrieved successfully",
+                    chatId,
                     messages,
                 },
             };

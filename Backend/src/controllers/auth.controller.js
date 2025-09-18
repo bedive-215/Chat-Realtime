@@ -51,9 +51,9 @@ export const logout = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   try {
+    const newAccessToken = res.locals.newAccessToken;
     return res.status(200).json({
-        user: req.user,
-        newAccessToken: res.locals.newAccessToken || req.token || null
+        newAccessToken
     });
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);

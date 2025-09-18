@@ -26,8 +26,7 @@ export const useAuthStore = create((set) => ({
   checkAuth: async () => {
     set({ isCheckingAuth: true });
     try {
-      const res = await axiosInstance.get("/auth/check-auth");
-
+      const res = await axiosInstance.get("/public/check-auth",{ withCredentials: true });
       if (res.data.newAccessToken) {
         axiosInstance.defaults.headers.common.Authorization =
           `Bearer ${res.data.newAccessToken}`;

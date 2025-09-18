@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import sequelize from "../configs/databaseConf.js";
+import Message from "../models/messages.model.js";
 import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redisHelper from "../helpers/redis.helper.js";

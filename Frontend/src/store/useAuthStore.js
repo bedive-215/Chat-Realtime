@@ -2,10 +2,21 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axio.js";
 import toast from "react-hot-toast";
 
+const saveToLocalStorage = (key, value) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+const getFromLocalStorage = (key, fallback = null) => {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : fallback;
+};
+const clearLocalStorage = (keys) => {
+  keys.forEach((key) => localStorage.removeItem(key));
+};
+
 export const useAuthStore = create((set) => ({
-  authUser: null,
+  authUser: getFromLocalStorage("authUser"),
   accessToken: null,
-  friends: [],
+  friends: getFromLocalStorage("friends", []),
 
   isSigningUp: false,
   isLoggingIn: false,
@@ -13,22 +24,39 @@ export const useAuthStore = create((set) => ({
   isCheckingAuth: true,
 
   checkAuth: async () => {
+    set({ isCheckingAuth: true });
     try {
-      const res = await axiosInstance.get("public/check-auth");
+      const res = await axiosInstance.get("/auth/check-auth");
 
       if (res.data.newAccessToken) {
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${res.data.newAccessToken}`;
+        axiosInstance.defaults.headers.common.Authorization =
+          `Bearer ${res.data.newAccessToken}`;
+        set({ accessToken: res.data.newAccessToken });
+      }
+      const storedUser = getFromLocalStorage("authUser");
+      if (storedUser) {
+        set({ authUser: storedUser });
       }
 
-      set({
-        authUser: res.data.user || null,
-        accessToken: res.data.newAccessToken || res.headers["x-access-token"] || null,
-        friends: res.data.friends || [],
-      });
+      const storedFriends = getFromLocalStorage("friends", []);
+      if (storedFriends.length > 0) {
+        set({ friends: storedFriends });
+      }
     } catch (err) {
       console.log("Error in checkAuth: ", err);
-      set({ authUser: null, accessToken: null, friends: [] });
-      delete axiosInstance.defaults.headers.common.Authorization;
+      if (err.response?.status === 401) {
+        set({ authUser: null, accessToken: null, friends: [] });
+        clearLocalStorage(["authUser", "friends"]);
+        delete axiosInstance.defaults.headers.common.Authorization;
+      } else {
+        const storedUser = getFromLocalStorage("authUser");
+        const storedFriends = getFromLocalStorage("friends", []);
+        set({
+          authUser: storedUser,
+          friends: storedFriends,
+          accessToken: null,
+        });
+      }
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -38,7 +66,6 @@ export const useAuthStore = create((set) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/public/signUp", data);
-      console.log("REPSONSE DATA:", res.data);
       const { accessToken, friends, user } = res.data;
       axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
@@ -47,6 +74,9 @@ export const useAuthStore = create((set) => ({
         accessToken,
         friends: friends || [],
       });
+
+      saveToLocalStorage("authUser", user);
+      saveToLocalStorage("friends", friends || []);
 
       toast.success("Account created successfully");
     } catch (error) {
@@ -69,7 +99,8 @@ export const useAuthStore = create((set) => ({
         friends: friends || [],
       });
 
-      // toast.success("Login successful");
+      saveToLocalStorage("authUser", user);
+      saveToLocalStorage("friends", friends || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
@@ -81,8 +112,8 @@ export const useAuthStore = create((set) => ({
     try {
       await axiosInstance.post("/public/logout");
       set({ authUser: null, accessToken: null, friends: [] });
+      clearLocalStorage(["authUser", "friends"]);
       delete axiosInstance.defaults.headers.common.Authorization;
-      // toast.success("Logged out successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Logout failed");
     }
@@ -99,6 +130,8 @@ export const useAuthStore = create((set) => ({
       });
 
       set({ authUser: res.data.user });
+      saveToLocalStorage("authUser", res.data.user);
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log("error in update profile:", error);

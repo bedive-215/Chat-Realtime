@@ -14,6 +14,7 @@ export const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
     req.user = decoded;
+    req.token = token;
     return next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -41,7 +42,7 @@ export const authMiddleware = async (req, res, next) => {
         };
         const newAccessToken = generateAccessToken(payload);
 
-        res.setHeader("x-access-token", newAccessToken);
+        res.locals.newAccessToken = newAccessToken;
         req.user = decodedRe;
         return next();
       } catch (refreshErr) {

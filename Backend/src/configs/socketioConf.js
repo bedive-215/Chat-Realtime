@@ -9,20 +9,22 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
 async function setUserOnline(userId) {
-  await redis.sadd('online_users', userId);
+  await redis.sAdd("online_users", userId);
 }
 
 async function setUserOffline(userId) {
-  await redis.srem("online_users", userId);
+  await redis.sRem("online_users", userId);
 }
 
-async function getUserOnline() {
-  const onlineFriends = await redis.sinter(`friends:${userId}`, "online_users");
+async function getUserOnline(userId) {
+  const onlineFriends = await redis.sInter(`friends:${userId}`, "online_users");
   return onlineFriends;
 }
 
@@ -32,11 +34,13 @@ io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
 
   if (userId) {
+    socket.userId = userId;
     await setUserOnline(userId);
-    await getUserOnline(userId).then((friends) => {
-      socket.emit("getUserOnline", friends);
-    });
+
+    const friends = await getUserOnline(userId);
+    socket.emit("getUserOnline", friends);
   }
+
   socketHandelService.joinRoom(socket, io);
   socketHandelService.sendMessage(socket, io);
 
@@ -45,7 +49,9 @@ io.on("connection", async (socket) => {
     await setUserOffline(userId);
 
     const friends = await getUserOnline(userId);
-    socket.emit("getUserOnline", friends);
+    friends.forEach(friendId => {
+      io.to(friendId).emit("friendOffline", { userId });
+    });
   });
 });
 

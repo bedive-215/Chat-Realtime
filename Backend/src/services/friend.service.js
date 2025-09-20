@@ -13,58 +13,86 @@ export default {
         const friends = await Friend.findAll({
             where: {
                 status: "accepted",
-                [Op.or]: [{ requester_id: userId }, { receiver_id: userId }]
+                [Op.or]: [
+                    { requester_id: userId },
+                    { receiver_id: userId }
+                ]
             },
             include: [
-                { model: User, as: "requester", attributes: ['id', 'username', 'profile_avatar'] },
-                { model: User, as: "receiver", attributes: ['id', 'username', 'profile_avatar'] }
+                { model: User, as: "requester", attributes: ["id", "username", "profile_avatar"] },
+                { model: User, as: "receiver", attributes: ["id", "username", "profile_avatar"] }
             ],
-            order: [["created_at", "DESC"]]
+            order: [["created_at", "DESC"]],
         });
 
         const friendList = await Promise.all(
             friends.map(async f => {
                 const friend = f.requester_id === userId ? f.receiver : f.requester;
-
-                // lấy chat riêng
                 const chat = await Chat.findOne({
                     where: { is_group: false },
-                    include: [{
-                        model: ChatParticipant,
-                        where: { user_id: { [Op.in]: [userId, friend.id] } },
-                        required: true
-                    }]
+                    include: [
+                        {
+                            model: ChatParticipant,
+                            as: "participants",
+                            attributes: ["user_id"],
+                            required: true
+                        }
+                    ]
                 });
 
-                let lastMessage = null;
                 let chatId = null;
+                let lastMessage = null;
 
                 if (chat) {
-                    if (chat) {
-                        chatId = chat.id;
-                        lastMessage = await Message.findOne({ chat_id: chat.id })
+                    const allChats = await Chat.findAll({
+                        where: { is_group: false },
+                        include: [
+                            {
+                                model: ChatParticipant,
+                                as: "participants",
+                                attributes: ["user_id"],
+                                required: true
+                            }
+                        ]
+                    });
+
+                    const correctChat = allChats.find(chat => {
+                        const participantIds = chat.participants.map(p => p.user_id);
+                        return participantIds.length === 2 &&
+                            participantIds.includes(userId) &&
+                            participantIds.includes(friend.id);
+                    });
+
+                    if (correctChat) {
+                        chatId = correctChat.id;
+                        lastMessage = await Message.findOne({ chatId })
                             .sort({ createdAt: -1 })
                             .lean();
                     }
-
                 }
 
                 return {
-                    ...friend.toJSON(),
+                    id: friend.id,
+                    username: friend.username,
+                    profile_avatar: friend.profile_avatar,
                     chatId,
                     lastMessage: lastMessage
                         ? {
-                            id: lastMessage.id,
-                            text: lastMessage.text,
-                            createdAt: lastMessage.created_at
+                            id: lastMessage._id.toString(),
+                            text: lastMessage.content,
+                            createdAt: lastMessage.createdAt,
+                            image: lastMessage.image || null,
                         }
                         : null,
                     unreadCount: 0,
                 };
             })
         );
+
+        console.log("Fallback DB executed for user:", friendList);
         return { friends, friendList };
     },
+
     // ================== Lấy danh sách bạn ==================
     async getFriends(userId) {
         if (!userId) {
@@ -240,7 +268,7 @@ export default {
         }
 
         await friendship.destroy();
-        await redisHelper.updateFriendshipCache(userId, friendId, null,"unfriend");
+        await redisHelper.updateFriendshipCache(userId, friendId, null, "unfriend");
 
         return { result: { message: "Unfriended successfully" } };
     },

@@ -10,12 +10,14 @@ export default {
         });
     },
     async sendMessage(socket, io) {
-        socket.on("sendMessage", async ({ receiverId, chatId, text, file }) => {
-            const { error, result } = await messageService.sendMessage(
+        socket.on("sendMessage", async ({ receiverId, chatId, text, file, tempId }) => {
+            const { error, result} = await messageService.sendMessage(
                 socket.userId,
+                receiverId,
                 chatId,
                 text,
-                file
+                file,
+                tempId
             );
             if (error) {
                 return socket.emit("errorMessage", error);

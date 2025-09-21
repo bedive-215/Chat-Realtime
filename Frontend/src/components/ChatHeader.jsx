@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 
 const ChatHeader = () => {
-  const { selectedUser, setSelectedUser } = useChatStore();
+  const { selectedUser, setSelectedUser, leaveCurrentChat } = useChatStore();
   const { onlineUsers } = useAuthStore();
 
   if (!selectedUser) return null; // Không render nếu chưa chọn user
@@ -35,7 +35,7 @@ const ChatHeader = () => {
 
         {/* Right: Close */}
         <button
-          onClick={() => setSelectedUser(null)}
+          onClick={() => leaveCurrentChat()}
           className="p-1 rounded-full hover:bg-base-200 transition"
           aria-label="Close chat"
         >

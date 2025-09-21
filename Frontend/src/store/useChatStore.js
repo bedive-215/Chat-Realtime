@@ -3,8 +3,6 @@ import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axio";
 import { socket } from "../lib/socket";
 import { v4 as uuidv4 } from "uuid";
-import { useAuthStore } from "./useAuthStore";
-
 
 export const useChatStore = create((set, get) => ({
     messages: [],
@@ -40,7 +38,6 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
-
     selectUser: (user) => {
         set({ selectedUser: user, messages: [] });
         const chatId = user.chatId;
@@ -56,7 +53,6 @@ export const useChatStore = create((set, get) => ({
             return;
         }
 
-        // Kiểm tra message không trống
         if (!text?.trim() && !file) {
             toast.error("Message cannot be empty");
             return;
@@ -76,16 +72,19 @@ export const useChatStore = create((set, get) => ({
             senderId: authUser.id,
             pending: true,
             createdAt: new Date().toISOString(),
-            // Nếu có file, thêm preview image tạm thời
             ...(file && { image: URL.createObjectURL(file) })
         };
 
         set({ messages: [...get().messages, newMsg] });
+        set({
+            users: get().users.map((user) =>
+                user.chatId === chatId
+                    ? { ...user, lastMessage: text?.trim() || "image" }
+                    : user
+            )
+        });
 
-        // Tạo FormData nếu có file
-        let messageData;
         if (file) {
-            // Convert file to buffer-like data for socket
             const reader = new FileReader();
             reader.onload = () => {
                 const arrayBuffer = reader.result;
@@ -105,7 +104,6 @@ export const useChatStore = create((set, get) => ({
             };
             reader.readAsArrayBuffer(file);
         } else {
-            // Chỉ có text
             socket.emit("sendMessage", {
                 receiverId,
                 chatId,
@@ -141,4 +139,87 @@ export const useChatStore = create((set, get) => ({
             }
         });
     },
+
+    leaveCurrentChat: () => {
+        const { selectedUser } = get();
+        if (selectedUser?.chatId) {
+            socket.emit("leaveChat", {
+                chatId: selectedUser.chatId,
+                friendId: selectedUser.id
+            });
+        }
+        set({ selectedUser: null, messages: [] });
+    },
+    
+    resetUnread: () => {
+        const { selectedUser } = get();
+        if (!selectedUser) return;
+        
+        const updateUsers = get().users.map((user) =>
+            user.id === selectedUser.id ? { ...user, unreadCount: 0 } : user
+        );
+        set({ users: updateUsers });
+    },
+
+    setupSocketListeners: () => {
+        
+        socket.removeAllListeners("chatUpdate");
+        socket.removeAllListeners("newMessage");
+        
+        socket.on("newMessage", (data) => {
+            const { selectedUser, messages } = get();
+
+            if (selectedUser && data.message.chatId === selectedUser.chatId) {
+                if (data.tempId) {
+                    const exists = messages.some((m) => m.id === data.tempId);
+
+                    if (exists) {
+                        set({
+                            messages: messages.map((m) =>
+                                m.id === data.tempId
+                                    ? { ...data.message, pending: false }
+                                    : m
+                            ),
+                        });
+                    } else {
+                        set({ messages: [...messages, data.message] });
+                    }
+                } else {
+                    set({ messages: [...messages, data.message] });
+                }
+            }
+        });
+
+        socket.on("chatUpdate", (data) => {
+            const currentUsers = get().users;
+            const authUser = JSON.parse(localStorage.getItem("authUser"));
+            
+            if (!authUser) {
+                console.log("No auth user found");
+                return;
+            }
+
+            const updatedUsers = currentUsers.map((user) => {
+                if (Number(user.id) === Number(data.senderId)) {
+                    const updatedUser = {
+                        ...user,
+                        lastMessage: data.lastMessage,
+                        unreadCount: data.unreadCount || 0
+                    };
+                    return updatedUser;
+                }
+                return user;
+            });
+
+            console.log("🔄Setting updated users:", updatedUsers);
+            set({ users: updatedUsers });
+            
+        });
+    },
+
+    // Method to clean up listeners
+    cleanupSocketListeners: () => {
+        socket.removeAllListeners("newMessage");
+        socket.removeAllListeners("chatUpdate");
+    }
 }));

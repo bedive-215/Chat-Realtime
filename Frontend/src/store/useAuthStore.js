@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axio.js";
 import toast from "react-hot-toast";
+import { socket } from "../lib/socket.js";
 
 const saveToLocalStorage = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
@@ -139,5 +140,11 @@ export const useAuthStore = create((set) => ({
     } finally {
       set({ isUpdatingProfile: false });
     }
+  },
+
+  setOnlineUsers: () =>{
+    socket.on("getUserOnline", (onlineUsers) => {
+      set({ onlineUsers });
+    });
   },
 }));

@@ -30,28 +30,32 @@ async function getUserOnline(userId) {
 
 io.on("connection", async (socket) => {
   console.log("A user connected", socket.id);
-
+  
   const userId = socket.handshake.query.userId;
-
   if (userId) {
     socket.userId = userId;
     await setUserOnline(userId);
-
+    
+    socket.join(userId.toString());
+    console.log(`User ${userId} joined personal room: ${userId.toString()}`);
+    
     const friends = await getUserOnline(userId);
     socket.emit("getUserOnline", friends);
   }
-
+  
   socketHandelService.joinRoom(socket, io);
   socketHandelService.sendMessage(socket, io);
-
+  
   socket.on("disconnect", async () => {
-    console.log("A user disconnected", socket.id);
-    await setUserOffline(userId);
-
-    const friends = await getUserOnline(userId);
-    friends.forEach(friendId => {
-      io.to(friendId).emit("friendOffline", { userId });
-    });
+    console.log("A user disconnected", socket.id, "userId:", userId);
+    
+    if (userId) {
+      await setUserOffline(userId);
+      const friends = await getUserOnline(userId);
+      friends.forEach(friendId => {
+        io.to(friendId).emit("friendOffline", { userId });
+      });
+    }
   });
 });
 

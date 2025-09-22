@@ -81,7 +81,6 @@ export const useAuthStore = create((set, get) => ({
 
       toast.success("Account created successfully");
 
-      // Setup socket sau khi signup thành công
       setTimeout(() => {
         get().initializeSocket();
         get().connectSocket();
@@ -110,7 +109,6 @@ export const useAuthStore = create((set, get) => ({
       saveToLocalStorage("authUser", user);
       saveToLocalStorage("friends", friends || []);
 
-      // Setup socket sau khi login thành công
       setTimeout(() => {
         get().initializeSocket();
         get().connectSocket();
@@ -126,20 +124,14 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       const currentUser = get().authUser;
-      
-      // 1. Notify server about logout trước khi disconnect
-      if (socket && socket.connected && currentUser) {
+            if (socket && socket.connected && currentUser) {
         console.log("Notifying server about logout...");
         socket.emit("userLogout", { userId: currentUser.id });
       }
-
-      // 2. Call API logout
       await axiosInstance.post("/public/logout");
 
-      // 3. Cleanup socket
       get().disconnectSocket();
 
-      // 4. Clear state
       set({ 
         authUser: null, 
         accessToken: null, 
@@ -147,10 +139,8 @@ export const useAuthStore = create((set, get) => ({
         onlineUsers: [] 
       });
       
-      // 5. Clear localStorage
       clearLocalStorage(["authUser", "friends"]);
       
-      // 6. Remove auth header
       delete axiosInstance.defaults.headers.common.Authorization;
 
       console.log("Logout completed successfully");
@@ -159,7 +149,6 @@ export const useAuthStore = create((set, get) => ({
       console.error("Logout error:", error);
       toast.error(error.response?.data?.message || "Logout failed");
       
-      // Cleanup local state even if API fails
       get().disconnectSocket();
       set({ 
         authUser: null, 
@@ -194,33 +183,23 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // Socket connection management
   connectSocket: () => {
     const currentUser = get().authUser;
     if (!currentUser || !socket) return;
 
-    console.log("Connecting socket for user:", currentUser.id);
-    
-    // Connect nếu chưa connect
     if (!socket.connected) {
       socket.connect();
     }
-
-    // Join user room hoặc emit user online
     socket.emit("userOnline", { userId: currentUser.id, username: currentUser.username });
   },
 
   disconnectSocket: () => {
     if (!socket) return;
 
-    console.log("Disconnecting socket...");
-    
-    // Remove all listeners
     socket.off("getUserOnline");
     socket.off("userOnline");
     socket.off("userOffline");
     
-    // Disconnect socket
     if (socket.connected) {
       socket.disconnect();
     }
@@ -228,25 +207,18 @@ export const useAuthStore = create((set, get) => ({
 
   initializeSocket: () => {
     if (!socket) return;
-    
-    console.log("Initializing socket listeners...");
-
-    // Remove existing listeners để tránh duplicate
     socket.off("getUserOnline");
     socket.off("userOnline");
     socket.off("userOffline");
 
     socket.on("getUserOnline", (onlineFriends) => {
-      console.log("Received online friends:", onlineFriends);
       set({ onlineUsers: onlineFriends || [] });
     });
 
     socket.on("userOnline", (userId) => {
-      console.log("User came online:", userId);
       set((state) => {
         const currentOnlineUsers = state.onlineUsers || [];
         if (!currentOnlineUsers.some(id => id == userId)) {
-          console.log("Adding user to online list:", userId);
           return { onlineUsers: [...currentOnlineUsers, userId] };
         }
         return state;
@@ -254,19 +226,15 @@ export const useAuthStore = create((set, get) => ({
     });
 
     socket.on("userOffline", ({ userId }) => {
-      console.log("User went offline:", userId);
       set((state) => {
         const currentOnlineUsers = state.onlineUsers || [];
         const newOnlineUsers = currentOnlineUsers.filter(id => id != userId);
-        console.log("Removing user from online list:", { userId, before: currentOnlineUsers, after: newOnlineUsers });
         return { onlineUsers: newOnlineUsers };
       });
     });
 
-    // Request current online users
     setTimeout(() => {
       if (socket.connected) {
-        console.log("Requesting online users...");
         socket.emit("getOnlineUsers");
       }
     }, 1000);

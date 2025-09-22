@@ -41,19 +41,8 @@ const Sidebar = () => {
   const isUserOnline = (userId) => {
     if (!processedOnlineUsers.length) return false;
     
-    // Debug log
-    console.log(`Checking if user ${userId} is online:`, {
-      userId,
-      processedOnlineUsers,
-      result: processedOnlineUsers.some(onlineId => 
-        onlineId == userId || // Sử dụng == thay vì === để so sánh loose
-        onlineId === userId.toString() || 
-        onlineId === String(userId)
-      )
-    });
-    
     return processedOnlineUsers.some(onlineId => 
-      onlineId == userId || // Sử dụng == thay vì ===
+      onlineId == userId || 
       onlineId === userId.toString() || 
       onlineId === String(userId)
     );

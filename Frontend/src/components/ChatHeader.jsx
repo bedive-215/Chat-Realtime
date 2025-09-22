@@ -6,21 +6,15 @@ const ChatHeader = () => {
   const { selectedUser, setSelectedUser, leaveCurrentChat } = useChatStore();
   const { onlineUsers } = useAuthStore();
   
-  if (!selectedUser) return null; // Không render nếu chưa chọn user
+  if (!selectedUser) return null;
 
-  // Handle onlineUsers properly - convert to array if it's an object
   const onlineUsersArray = Array.isArray(onlineUsers) 
     ? onlineUsers 
     : Object.values(onlineUsers || {});
   
-  // Fix: Use proper string conversion and comparison for online status
   const isOnline = onlineUsersArray.includes(selectedUser.id.toString()) || 
                   onlineUsersArray.includes(selectedUser.id) ||
                   onlineUsersArray.includes(String(selectedUser.id));
-
-  console.log("ChatHeader - Selected User ID:", selectedUser.id, typeof selectedUser.id);
-  console.log("ChatHeader - Online Users:", onlineUsersArray);
-  console.log("ChatHeader - Is Online:", isOnline);
 
   return (
     <header className="p-2.5 border-b border-base-300">

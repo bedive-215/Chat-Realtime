@@ -25,11 +25,26 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
-    getMessages: async (chatId) => {
-        set({ isMessagesLoading: true });
+    getMessages: async (chatId, { before } = {}) => {
+        if(!before) set({ isMessagesLoading: true });
         try {
-            const res = await axiosInstance.get(`/user/messages/${chatId}`);
-            set({ messages: res.data.messages.reverse() });
+            const res = await axiosInstance.get(`/user/messages/${chatId}`, {
+                params: { before },
+            });
+
+            set((state) => {
+                if (before) {
+                    // append vào đầu (không reset)
+                    return {
+                        messages: [...res.data.messages.reverse(), ...state.messages],
+                    };
+                } else {
+                    // lần đầu load → thay thế
+                    return {
+                        messages: res.data.messages.reverse(),
+                    };
+                }
+            });
         } catch (error) {
             console.log("Error fetching messages:", error);
             toast.error("Failed to fetch messages");
@@ -150,11 +165,11 @@ export const useChatStore = create((set, get) => ({
         }
         set({ selectedUser: null, messages: [] });
     },
-    
+
     resetUnread: () => {
         const { selectedUser } = get();
         if (!selectedUser) return;
-        
+
         const updateUsers = get().users.map((user) =>
             user.id === selectedUser.id ? { ...user, unreadCount: 0 } : user
         );
@@ -162,10 +177,10 @@ export const useChatStore = create((set, get) => ({
     },
 
     setupSocketListeners: () => {
-        
+
         socket.removeAllListeners("chatUpdate");
         socket.removeAllListeners("newMessage");
-        
+
         socket.on("newMessage", (data) => {
             const { selectedUser, messages } = get();
 
@@ -193,7 +208,7 @@ export const useChatStore = create((set, get) => ({
         socket.on("chatUpdate", (data) => {
             const currentUsers = get().users;
             const authUser = JSON.parse(localStorage.getItem("authUser"));
-            
+
             if (!authUser) {
                 console.log("No auth user found");
                 return;
@@ -213,7 +228,7 @@ export const useChatStore = create((set, get) => ({
 
             console.log("🔄Setting updated users:", updatedUsers);
             set({ users: updatedUsers });
-            
+
         });
     },
 

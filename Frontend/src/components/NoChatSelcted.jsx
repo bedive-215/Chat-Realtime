@@ -17,9 +17,10 @@ const NoChatSelected = () => {
         </div>
 
         {/* Welcome Text */}
-        <h2 className="text-2xl font-bold">Welcome to Chatty!</h2>
+        <h2 className="text-2xl font-bold">Welcome to the Beach!</h2>
         <p className="text-base-content/60">
-          Select a conversation from the sidebar to start chatting
+          Select a conversation from the sidebar to start "the Beach" <br />
+          As a fan of Death Stranding, this is my way of honoring Hideo Kojima’s masterpiece. 
         </p>
       </div>
     </div>

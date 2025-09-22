@@ -1,0 +1,33 @@
+[2025-09-22T12:39:35.563Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  suppress all logs with { quiet: true }[0m
+[2025-09-22T12:39:35.747Z] chat_realtime
+[2025-09-22T12:39:36.540Z] 🚀 Server is running on http://localhost:8080
+[2025-09-22T12:39:36.558Z] Redis connected
+[2025-09-22T12:39:36.631Z] A user connected 4GESxcoi9rWKx1MyAAAB
+[2025-09-22T12:39:36.637Z] User 5 joined personal room: 5
+[2025-09-22T12:39:36.643Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:39:36.694Z] A user connected Le8DTQSyleNcFnKQAAAD
+[2025-09-22T12:39:36.696Z] User 2 joined personal room: 2
+[2025-09-22T12:39:36.699Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:39:37.377Z] Connected to MongoDB Atlas
+[2025-09-22T12:40:20.000Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit[0m
+[2025-09-22T12:40:20.187Z] chat_realtime
+[2025-09-22T12:40:20.994Z] 🚀 Server is running on http://localhost:8080
+[2025-09-22T12:40:21.012Z] Redis connected
+[2025-09-22T12:40:21.093Z] A user connected DnfWdkiM-QXj-PqiAAAB
+[2025-09-22T12:40:21.100Z] User 5 joined personal room: 5
+[2025-09-22T12:40:21.104Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:40:21.175Z] A user connected PQpHGX4otGZPFoVyAAAD
+[2025-09-22T12:40:21.176Z] User 2 joined personal room: 2
+[2025-09-22T12:40:21.179Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:40:21.945Z] Connected to MongoDB Atlas
+[2025-09-22T12:40:59.812Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }[0m
+[2025-09-22T12:40:59.996Z] chat_realtime
+[2025-09-22T12:41:00.586Z] 🚀 Server is running on http://localhost:8080
+[2025-09-22T12:41:00.609Z] Redis connected
+[2025-09-22T12:41:00.658Z] A user connected uXvbHWWeN90DEAG3AAAB
+[2025-09-22T12:41:00.664Z] User 2 joined personal room: 2
+[2025-09-22T12:41:00.712Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:41:01.261Z] A user connected fHVp3qaxOUzI9DItAAAD
+[2025-09-22T12:41:01.263Z] User 5 joined personal room: 5
+[2025-09-22T12:41:01.268Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:41:01.835Z] Connected to MongoDB Atlas

@@ -1,3 +1,4 @@
+import "./logs/logger.js";
 import express from "express";
 import router from "./routes/app.route.js";
 import { PORT } from "./helpers/env.helper.js";
@@ -19,6 +20,6 @@ app.use(
 app.use("/api", router);
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
   connectMongoDB();
 });

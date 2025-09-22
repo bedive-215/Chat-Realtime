@@ -1,0 +1,32 @@
+[2025-09-22T12:43:28.682Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com[0m
+[2025-09-22T12:43:28.921Z] chat_realtime
+[2025-09-22T12:43:29.900Z] 🚀 Server is running on http://localhost:8080
+[2025-09-22T12:43:29.931Z] Redis connected
+[2025-09-22T12:43:29.936Z] A user connected hZdmmawYWYG7OEPMAAAB
+[2025-09-22T12:43:29.941Z] User 2 joined personal room: 2
+[2025-09-22T12:43:29.956Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:43:30.060Z] A user connected 3kKf3KVkVKJ7kFtkAAAD
+[2025-09-22T12:43:30.062Z] User 5 joined personal room: 5
+[2025-09-22T12:43:30.065Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:43:30.687Z] Connected to MongoDB Atlas
+[2025-09-22T12:44:13.544Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }[0m
+[2025-09-22T12:44:13.755Z] chat_realtime
+[2025-09-22T12:44:14.481Z] Server is running on http://localhost:8080
+[2025-09-22T12:44:14.504Z] Redis connected
+[2025-09-22T12:44:14.674Z] A user connected IH9evj4jrEF-YsDuAAAB
+[2025-09-22T12:44:14.680Z] User 2 joined personal room: 2
+[2025-09-22T12:44:14.691Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:44:14.697Z] A user connected jrvC9j5ZEP4AbOblAAAD
+[2025-09-22T12:44:14.698Z] User 5 joined personal room: 5
+[2025-09-22T12:44:14.701Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:44:15.269Z] Connected to MongoDB Atlas
+[2025-09-22T12:56:48.107Z] A user disconnected IH9evj4jrEF-YsDuAAAB userId: 2
+[2025-09-22T12:56:48.144Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:56:48.762Z] A user connected QlAjhAnrMs6CBZa2AAAF
+[2025-09-22T12:56:48.772Z] User 2 joined personal room: 2
+[2025-09-22T12:56:48.779Z] Online friends for user 2 : ["5"]
+[2025-09-22T12:56:49.114Z] A user disconnected jrvC9j5ZEP4AbOblAAAD userId: 5
+[2025-09-22T12:56:49.189Z] Online friends for user 5 : ["2"]
+[2025-09-22T12:56:50.220Z] A user connected -PHGhOKsSHKoHd6fAAAH
+[2025-09-22T12:56:50.222Z] User 5 joined personal room: 5
+[2025-09-22T12:56:50.226Z] Online friends for user 5 : ["2"]

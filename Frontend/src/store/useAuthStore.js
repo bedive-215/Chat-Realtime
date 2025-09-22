@@ -14,7 +14,7 @@ const clearLocalStorage = (keys) => {
   keys.forEach((key) => localStorage.removeItem(key));
 };
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   authUser: getFromLocalStorage("authUser"),
   accessToken: null,
   friends: getFromLocalStorage("friends", []),
@@ -28,7 +28,7 @@ export const useAuthStore = create((set) => ({
   checkAuth: async () => {
     set({ isCheckingAuth: true });
     try {
-      const res = await axiosInstance.get("/public/check-auth",{ withCredentials: true });
+      const res = await axiosInstance.get("/public/check-auth", { withCredentials: true });
       if (res.data.newAccessToken) {
         axiosInstance.defaults.headers.common.Authorization =
           `Bearer ${res.data.newAccessToken}`;
@@ -46,7 +46,7 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       console.log("Error in checkAuth: ", err);
       if (err.response?.status === 401) {
-        set({ authUser: null, accessToken: null, friends: [] });
+        set({ authUser: null, accessToken: null, friends: [], onlineUsers: [] });
         clearLocalStorage(["authUser", "friends"]);
         delete axiosInstance.defaults.headers.common.Authorization;
       } else {
@@ -80,6 +80,13 @@ export const useAuthStore = create((set) => ({
       saveToLocalStorage("friends", friends || []);
 
       toast.success("Account created successfully");
+
+      // Setup socket sau khi signup thành công
+      setTimeout(() => {
+        get().initializeSocket();
+        get().connectSocket();
+      }, 500);
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed");
     } finally {
@@ -102,6 +109,13 @@ export const useAuthStore = create((set) => ({
 
       saveToLocalStorage("authUser", user);
       saveToLocalStorage("friends", friends || []);
+
+      // Setup socket sau khi login thành công
+      setTimeout(() => {
+        get().initializeSocket();
+        get().connectSocket();
+      }, 500);
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
@@ -111,12 +125,50 @@ export const useAuthStore = create((set) => ({
 
   logout: async () => {
     try {
+      const currentUser = get().authUser;
+      
+      // 1. Notify server about logout trước khi disconnect
+      if (socket && socket.connected && currentUser) {
+        console.log("Notifying server about logout...");
+        socket.emit("userLogout", { userId: currentUser.id });
+      }
+
+      // 2. Call API logout
       await axiosInstance.post("/public/logout");
-      set({ authUser: null, accessToken: null, friends: [] });
+
+      // 3. Cleanup socket
+      get().disconnectSocket();
+
+      // 4. Clear state
+      set({ 
+        authUser: null, 
+        accessToken: null, 
+        friends: [],
+        onlineUsers: [] 
+      });
+      
+      // 5. Clear localStorage
+      clearLocalStorage(["authUser", "friends"]);
+      
+      // 6. Remove auth header
+      delete axiosInstance.defaults.headers.common.Authorization;
+
+      console.log("Logout completed successfully");
+
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error(error.response?.data?.message || "Logout failed");
+      
+      // Cleanup local state even if API fails
+      get().disconnectSocket();
+      set({ 
+        authUser: null, 
+        accessToken: null, 
+        friends: [],
+        onlineUsers: []
+      });
       clearLocalStorage(["authUser", "friends"]);
       delete axiosInstance.defaults.headers.common.Authorization;
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Logout failed");
     }
   },
 
@@ -142,9 +194,81 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  setOnlineUsers: () =>{
-    socket.on("getUserOnline", (onlineUsers) => {
-      set({ onlineUsers });
+  // Socket connection management
+  connectSocket: () => {
+    const currentUser = get().authUser;
+    if (!currentUser || !socket) return;
+
+    console.log("Connecting socket for user:", currentUser.id);
+    
+    // Connect nếu chưa connect
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Join user room hoặc emit user online
+    socket.emit("userOnline", { userId: currentUser.id, username: currentUser.username });
+  },
+
+  disconnectSocket: () => {
+    if (!socket) return;
+
+    console.log("Disconnecting socket...");
+    
+    // Remove all listeners
+    socket.off("getUserOnline");
+    socket.off("userOnline");
+    socket.off("userOffline");
+    
+    // Disconnect socket
+    if (socket.connected) {
+      socket.disconnect();
+    }
+  },
+
+  initializeSocket: () => {
+    if (!socket) return;
+    
+    console.log("Initializing socket listeners...");
+
+    // Remove existing listeners để tránh duplicate
+    socket.off("getUserOnline");
+    socket.off("userOnline");
+    socket.off("userOffline");
+
+    socket.on("getUserOnline", (onlineFriends) => {
+      console.log("Received online friends:", onlineFriends);
+      set({ onlineUsers: onlineFriends || [] });
     });
+
+    socket.on("userOnline", (userId) => {
+      console.log("User came online:", userId);
+      set((state) => {
+        const currentOnlineUsers = state.onlineUsers || [];
+        if (!currentOnlineUsers.some(id => id == userId)) {
+          console.log("Adding user to online list:", userId);
+          return { onlineUsers: [...currentOnlineUsers, userId] };
+        }
+        return state;
+      });
+    });
+
+    socket.on("userOffline", ({ userId }) => {
+      console.log("User went offline:", userId);
+      set((state) => {
+        const currentOnlineUsers = state.onlineUsers || [];
+        const newOnlineUsers = currentOnlineUsers.filter(id => id != userId);
+        console.log("Removing user from online list:", { userId, before: currentOnlineUsers, after: newOnlineUsers });
+        return { onlineUsers: newOnlineUsers };
+      });
+    });
+
+    // Request current online users
+    setTimeout(() => {
+      if (socket.connected) {
+        console.log("Requesting online users...");
+        socket.emit("getOnlineUsers");
+      }
+    }, 1000);
   },
 }));

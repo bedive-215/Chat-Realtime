@@ -1,21 +1,71 @@
-import { useEffect } from "react";
-import { Check, Users } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Users } from "lucide-react";
 import SidebarSekeleton from "./skeletons/SidebarSekeleton";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 
 const Sidebar = () => {
   const { users, getUser, isUsersLoading, selectUser, selectedUser, resetUnread } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  
+  // Fix 1: Sử dụng selector đơn giản hơn và force re-render
+  const onlineUsers = useAuthStore((state) => state.onlineUsers);
+  
+  // Debug: Log để kiểm tra
+  console.log("Sidebar render - onlineUsers:", onlineUsers);
+  
+  // Force re-render khi onlineUsers thay đổi
+  const renderKey = JSON.stringify(onlineUsers);
 
+  // Fix 2: Sử dụng useEffect với dependency array rỗng
   useEffect(() => {
-    getUser();
-  }, [getUser]);
+    if (typeof getUser === 'function') {
+      getUser().catch(console.error);
+    }
+  }, []); // Chỉ chạy 1 lần khi component mount
+
+  // Fix 3: Memoize việc xử lý onlineUsers để tránh tính toán lại không cần thiết
+  const processedOnlineUsers = useMemo(() => {
+    if (!onlineUsers) return [];
+    
+    if (Array.isArray(onlineUsers)) {
+      return onlineUsers;
+    }
+    
+    if (typeof onlineUsers === 'object') {
+      return Object.values(onlineUsers);
+    }
+    
+    return [];
+  }, [onlineUsers]);
+
+  const isUserOnline = (userId) => {
+    if (!processedOnlineUsers.length) return false;
+    
+    // Debug log
+    console.log(`Checking if user ${userId} is online:`, {
+      userId,
+      processedOnlineUsers,
+      result: processedOnlineUsers.some(onlineId => 
+        onlineId == userId || // Sử dụng == thay vì === để so sánh loose
+        onlineId === userId.toString() || 
+        onlineId === String(userId)
+      )
+    });
+    
+    return processedOnlineUsers.some(onlineId => 
+      onlineId == userId || // Sử dụng == thay vì ===
+      onlineId === userId.toString() || 
+      onlineId === String(userId)
+    );
+  };
 
   if (isUsersLoading) return <SidebarSekeleton />;
 
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
+    <aside 
+      key={renderKey} 
+      className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200"
+    >
       {/* Header */}
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
@@ -26,9 +76,11 @@ const Sidebar = () => {
 
       {/* Contact list */}
       <div className="overflow-y-auto w-full py-3">
-        {users.map((user) => {
+        {Array.isArray(users) && users.map((user) => {
+          if (!user || !user.id) return null; // Fix 4: Kiểm tra user hợp lệ
+
           const isSelected = selectedUser?.id === user.id;
-          const isOnline = onlineUsers.includes(user.id);
+          const isOnline = isUserOnline(user.id);
           const hasUnread = user.unreadCount > 0;
 
           const handleClick = () => {
@@ -53,23 +105,23 @@ const Sidebar = () => {
               <div className="relative mx-auto lg:mx-0">
                 <img
                   src={user.profile_avatar || "/avatar.png"}
-                  alt={user.username}
+                  alt={user.username || "User"}
                   className="size-12 object-cover rounded-full"
+                  onError={(e) => {
+                    e.target.src = "/avatar.png"; // Fallback nếu ảnh lỗi
+                  }}
                 />
                 {isOnline && (
-                  <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+                  <span className="absolute bottom-0 right-0 size-3 bg-green-400 rounded-full border-2 border-white" />
                 )}
               </div>
 
               {/* User info (desktop only) */}
               <div className="hidden lg:block text-left min-w-0 flex-1">
                 <div className="font-medium truncate flex items-center gap-1">
-                  <span className={isSelected ? "text-base-content" : "text-base-content"}>
-                    {user.username}
+                  <span className="text-base-content">
+                    {user.username || "Unknown User"}
                   </span>
-                  {isOnline && (
-                    <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
-                  )}
                 </div>
                 <div
                   className={`text-sm truncate ${
@@ -93,19 +145,12 @@ const Sidebar = () => {
               {hasUnread && (
                 <div className="lg:hidden absolute top-2 right-2 bg-red-500 rounded-full w-3 h-3"></div>
               )}
-
-              {/* Online indicator (mobile) */}
-              {isOnline && (
-                <div className="lg:hidden absolute bottom-2 right-2">
-                  <Check className="w-3 h-3 text-green-500" />
-                </div>
-              )}
             </button>
           );
         })}
 
         {/* Empty state */}
-        {users.length === 0 && (
+        {(!Array.isArray(users) || users.length === 0) && (
           <div className="text-center text-base-400 py-4">No contacts</div>
         )}
       </div>

@@ -5,17 +5,29 @@ import { useChatStore } from "../store/useChatStore";
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser, leaveCurrentChat } = useChatStore();
   const { onlineUsers } = useAuthStore();
-
+  
   if (!selectedUser) return null; // Không render nếu chưa chọn user
 
-  const isOnline = onlineUsers.includes(selectedUser.id);
+  // Handle onlineUsers properly - convert to array if it's an object
+  const onlineUsersArray = Array.isArray(onlineUsers) 
+    ? onlineUsers 
+    : Object.values(onlineUsers || {});
+  
+  // Fix: Use proper string conversion and comparison for online status
+  const isOnline = onlineUsersArray.includes(selectedUser.id.toString()) || 
+                  onlineUsersArray.includes(selectedUser.id) ||
+                  onlineUsersArray.includes(String(selectedUser.id));
+
+  console.log("ChatHeader - Selected User ID:", selectedUser.id, typeof selectedUser.id);
+  console.log("ChatHeader - Online Users:", onlineUsersArray);
+  console.log("ChatHeader - Is Online:", isOnline);
 
   return (
     <header className="p-2.5 border-b border-base-300">
       <div className="flex items-center justify-between">
         {/* Left: Avatar + Info */}
         <div className="flex items-center gap-3">
-          <div className="avatar">
+          <div className="avatar relative">
             <div className="size-10 rounded-full overflow-hidden">
               <img
                 src={selectedUser.profile_avatar || "/avatar.png"}
@@ -23,16 +35,19 @@ const ChatHeader = () => {
                 className="object-cover w-full h-full"
               />
             </div>
+            {/* Online indicator dot */}
+            {isOnline && (
+              <span className="absolute bottom-0 right-0 size-3 bg-green-400 rounded-full border-2 border-white" />
+            )}
           </div>
-
           <div>
             <h3 className="font-medium">{selectedUser.fullName}</h3>
-            <p className={`text-sm ${isOnline ? "text-green-500" : "text-gray-400"}`}>
+            <p className={`text-sm ${isOnline ? "text-green-400" : "text-gray-400"}`}>
               {isOnline ? "Online" : "Offline"}
             </p>
           </div>
         </div>
-
+        
         {/* Right: Close */}
         <button
           onClick={() => leaveCurrentChat()}

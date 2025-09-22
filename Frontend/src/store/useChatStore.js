@@ -217,7 +217,6 @@ export const useChatStore = create((set, get) => ({
         });
     },
 
-    // Method to clean up listeners
     cleanupSocketListeners: () => {
         socket.removeAllListeners("newMessage");
         socket.removeAllListeners("chatUpdate");

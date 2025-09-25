@@ -34,12 +34,10 @@ export const useChatStore = create((set, get) => ({
 
             set((state) => {
                 if (before) {
-                    // append vào đầu (không reset)
                     return {
                         messages: [...res.data.messages.reverse(), ...state.messages],
                     };
                 } else {
-                    // lần đầu load → thay thế
                     return {
                         messages: res.data.messages.reverse(),
                     };

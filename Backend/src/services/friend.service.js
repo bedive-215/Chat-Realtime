@@ -1,10 +1,12 @@
 import models from "../models/index.js";
 import sequelize from "../configs/databaseConf.js";
 import Message from "../models/messages.model.js";
+import Notification from "../models/notifications.model.js";
 import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redisHelper from "../helpers/redis.helper.js";
 import redis from "../configs/redisConf.js";
+import norificationService from "./norification.service.js";
 
 const { User, Friend, Chat, ChatParticipant } = models;
 
@@ -186,6 +188,9 @@ export default {
         }
 
         const request = await Friend.create({ requester_id: userId, receiver_id: friendId, status: "pending" });
+        if(request) {
+            await Notification.createNotification(userId, friendId, 'friend_request', 'You have a new friend request');
+        }
         return { result: request };
     },
 
@@ -214,6 +219,7 @@ export default {
             const chatId = await chatService.createChat(userId, requesterId, t);
             // update cache (nên làm sau khi commit)
             await t.commit();
+            await Notification.createNotification(requesterId, userId, 'friend_request_accepted', 'Your friend request has been accepted');
             await redisHelper.updateFriendshipCache(userId, requesterId, chatId, "accept");
 
             return { result: request };

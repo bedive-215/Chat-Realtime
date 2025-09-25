@@ -51,6 +51,7 @@ io.on("connection", async (socket) => {
 
   socketHandelService.joinRoom(socket, io);
   socketHandelService.sendMessage(socket, io);
+  socketHandelService.sendNotification(socket, io);
 
   socket.on("disconnect", async () => {
     console.log("A user disconnected", socket.id, "userId:", userId);

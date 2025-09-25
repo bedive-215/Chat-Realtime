@@ -6,7 +6,6 @@ import { app, server } from "./configs/socketioConf.js";
 import { connectMongoDB } from "./configs/mongooDBConf.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import path from "path";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

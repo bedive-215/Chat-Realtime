@@ -4,36 +4,52 @@ import SignUpPage from "./pages/SignUpPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
-
 import { Routes, Route, Navigate } from "react-router-dom"
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useChatStore } from "./store/useChatStore";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, accessToken } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, accessToken, initializeSocket } = useAuthStore();
   const { theme } = useThemeStore();
-  const { getUser, users } = useChatStore();
+  const { getUser, users, setupSocketListeners, cleanupSocketListeners } = useChatStore();
 
+  // Check authentication
   useEffect(() => {
-    if(!accessToken){
+    if (!accessToken) {
       checkAuth();
     }
   }, [checkAuth, accessToken]);
-  
-  console.log(authUser);
 
+  // Get users when authenticated
   useEffect(() => {
     if (authUser && accessToken) {
       getUser();
-      console.log("Access token present, fetching users...", accessToken);
     }
   }, [authUser, accessToken, getUser]);
 
+  // FIXED: Initialize socket listeners when user is authenticated
+  useEffect(() => {
+    if (authUser && accessToken) {
+      setupSocketListeners();
+      
+      // cleanupSocketListeners on unmount or when user changes
+      return () => {
+        cleanupSocketListeners();
+      };
+    }
+  }, [authUser, accessToken, setupSocketListeners, cleanupSocketListeners]);
+
+  useEffect(() => {
+    if (authUser) {
+      initializeSocket();
+    }
+  }, [authUser, initializeSocket]);
+
+  console.log(authUser);
   console.log(users);
 
   if (isCheckingAuth) return (
@@ -53,8 +69,8 @@ const App = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
       </Routes>
-
     </div>
   );
 }
+
 export default App;

@@ -78,7 +78,7 @@ export default {
             const receiverFriend = JSON.parse(receiverFriendJson);
             receiverFriend.lastMessage = messageText;
             receiverFriend.unreadCount = (receiverFriend.unreadCount || 0) + 1;
-            await redis.hset(receiverInfoKey, String(senderId), JSON.stringify(receiverFriend));
+            await redis.hSet(receiverInfoKey, String(senderId), JSON.stringify(receiverFriend));
         }
     },
 
@@ -95,7 +95,7 @@ export default {
 
     async getUnreadCount(userId, friendId) {
         const key = `friends_info:${userId}`;
-        const data = await redisClient.hget(key, friendId.toString());
+        const data = await redis.hGet(key, friendId.toString());
         if (!data) return 0;
 
         const parsed = JSON.parse(data);

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axio.js";
 import toast from "react-hot-toast";
+import { socket } from "../lib/socket.js";
 
 const saveToLocalStorage = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
@@ -13,7 +14,7 @@ const clearLocalStorage = (keys) => {
   keys.forEach((key) => localStorage.removeItem(key));
 };
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   authUser: getFromLocalStorage("authUser"),
   accessToken: null,
   friends: getFromLocalStorage("friends", []),
@@ -22,11 +23,12 @@ export const useAuthStore = create((set) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
+  onlineUsers: [],
 
   checkAuth: async () => {
     set({ isCheckingAuth: true });
     try {
-      const res = await axiosInstance.get("/public/check-auth",{ withCredentials: true });
+      const res = await axiosInstance.get("/public/check-auth", { withCredentials: true });
       if (res.data.newAccessToken) {
         axiosInstance.defaults.headers.common.Authorization =
           `Bearer ${res.data.newAccessToken}`;
@@ -44,7 +46,7 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       console.log("Error in checkAuth: ", err);
       if (err.response?.status === 401) {
-        set({ authUser: null, accessToken: null, friends: [] });
+        set({ authUser: null, accessToken: null, friends: [], onlineUsers: [] });
         clearLocalStorage(["authUser", "friends"]);
         delete axiosInstance.defaults.headers.common.Authorization;
       } else {
@@ -78,6 +80,12 @@ export const useAuthStore = create((set) => ({
       saveToLocalStorage("friends", friends || []);
 
       toast.success("Account created successfully");
+
+      setTimeout(() => {
+        get().initializeSocket();
+        get().connectSocket();
+      }, 500);
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed");
     } finally {
@@ -100,6 +108,12 @@ export const useAuthStore = create((set) => ({
 
       saveToLocalStorage("authUser", user);
       saveToLocalStorage("friends", friends || []);
+
+      setTimeout(() => {
+        get().initializeSocket();
+        get().connectSocket();
+      }, 500);
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
@@ -109,12 +123,41 @@ export const useAuthStore = create((set) => ({
 
   logout: async () => {
     try {
+      const currentUser = get().authUser;
+            if (socket && socket.connected && currentUser) {
+        console.log("Notifying server about logout...");
+        socket.emit("userLogout", { userId: currentUser.id });
+      }
       await axiosInstance.post("/public/logout");
-      set({ authUser: null, accessToken: null, friends: [] });
+
+      get().disconnectSocket();
+
+      set({ 
+        authUser: null, 
+        accessToken: null, 
+        friends: [],
+        onlineUsers: [] 
+      });
+      
+      clearLocalStorage(["authUser", "friends"]);
+      
+      delete axiosInstance.defaults.headers.common.Authorization;
+
+      console.log("Logout completed successfully");
+
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error(error.response?.data?.message || "Logout failed");
+      
+      get().disconnectSocket();
+      set({ 
+        authUser: null, 
+        accessToken: null, 
+        friends: [],
+        onlineUsers: []
+      });
       clearLocalStorage(["authUser", "friends"]);
       delete axiosInstance.defaults.headers.common.Authorization;
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Logout failed");
     }
   },
 
@@ -138,5 +181,62 @@ export const useAuthStore = create((set) => ({
     } finally {
       set({ isUpdatingProfile: false });
     }
+  },
+
+  connectSocket: () => {
+    const currentUser = get().authUser;
+    if (!currentUser || !socket) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+    socket.emit("userOnline", { userId: currentUser.id, username: currentUser.username });
+  },
+
+  disconnectSocket: () => {
+    if (!socket) return;
+
+    socket.off("getUserOnline");
+    socket.off("userOnline");
+    socket.off("userOffline");
+    
+    if (socket.connected) {
+      socket.disconnect();
+    }
+  },
+
+  initializeSocket: () => {
+    if (!socket) return;
+    socket.off("getUserOnline");
+    socket.off("userOnline");
+    socket.off("userOffline");
+
+    socket.on("getUserOnline", (onlineFriends) => {
+      set({ onlineUsers: onlineFriends || [] });
+    });
+
+    socket.on("userOnline", (userId) => {
+      set((state) => {
+        const currentOnlineUsers = state.onlineUsers || [];
+        if (!currentOnlineUsers.some(id => id == userId)) {
+          return { onlineUsers: [...currentOnlineUsers, userId] };
+        }
+        return state;
+      });
+    });
+
+    socket.on("userOffline", ({ userId }) => {
+      set((state) => {
+        const currentOnlineUsers = state.onlineUsers || [];
+        const newOnlineUsers = currentOnlineUsers.filter(id => id != userId);
+        return { onlineUsers: newOnlineUsers };
+      });
+    });
+
+    setTimeout(() => {
+      if (socket.connected) {
+        socket.emit("getOnlineUsers");
+      }
+    }, 1000);
   },
 }));

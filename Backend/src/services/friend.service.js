@@ -1,12 +1,11 @@
 import models from "../models/index.js";
 import sequelize from "../configs/databaseConf.js";
 import Message from "../models/messages.model.js";
-import Notification from "../models/notifications.model.js";
 import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redisHelper from "../helpers/redis.helper.js";
 import redis from "../configs/redisConf.js";
-import norificationService from "./norification.service.js";
+import notificationService from "./norification.service.js";
 
 const { User, Friend, Chat, ChatParticipant } = models;
 
@@ -163,7 +162,7 @@ export default {
 
         return { result: friendList, source: "db" };
     },
-    // ================== Gửi lời mời ==================
+
     async sendFriendRequest(userId, friendId) {
         if (!userId || !friendId) {
             return { error: { code: 400, name: "FriendError", message: "User ID and Friend ID are required" } };
@@ -187,14 +186,21 @@ export default {
             if (existing.status === "accepted") return { error: { code: 400, message: "Already friends" } };
         }
 
+        const requester = await User.findByPk(userId);
         const request = await Friend.create({ requester_id: userId, receiver_id: friendId, status: "pending" });
+
+        let notification = null;
         if(request) {
-            await Notification.createNotification(userId, friendId, 'friend_request', 'You have a new friend request');
+            notification = await notificationService.createNotification(
+                userId, 
+                friendId, 
+                'friend_request', 
+                `You have a new friend request from ${requester?.username || "Someone"}`
+            );
         }
-        return { result: request };
+        return { result: {request, notification} };
     },
 
-    // ================== Chấp nhận ==================
     async acceptFriendRequest(userId, requesterId) {
         const t = await sequelize.transaction();
         try {
@@ -215,21 +221,26 @@ export default {
             request.status = "accepted";
             await request.save({ transaction: t });
 
-            // tạo chat trong transaction
             const chatId = await chatService.createChat(userId, requesterId, t);
-            // update cache (nên làm sau khi commit)
+
             await t.commit();
-            await Notification.createNotification(requesterId, userId, 'friend_request_accepted', 'Your friend request has been accepted');
             await redisHelper.updateFriendshipCache(userId, requesterId, chatId, "accept");
 
-            return { result: request };
+            const notification = await notificationService.createNotification(
+                userId, 
+                requesterId,
+                'friend_request_accepted', 
+                'Your friend request has been accepted by ' + (request.receiver?.username || "Someone")
+            );
+
+            return { result:{ request, notification } };
         } catch (err) {
             await t.rollback();
+            console.error("acceptFriendRequest error:", err);
             throw err;
         }
     },
 
-    // ================== Từ chối ==================
     async rejectFriendRequest(userId, requesterId) {
         const request = await Friend.findOne({
             where: { requester_id: requesterId, receiver_id: userId, status: "pending" }
@@ -240,10 +251,17 @@ export default {
         }
 
         await request.destroy();
-        return { result: { message: "Friend request rejected" } };
+        const receiver = await User.findByPk(userId);
+        const notification = await notificationService.createNotification(
+            userId, 
+            requesterId,
+            'friend_request_rejected', 
+            'Your friend request has been rejected by ' + (receiver?.username || "Someone")
+        );
+
+        return { result: { message: "Friend request rejected", notification } };
     },
 
-    // ================== Hủy lời mời ==================
     async cancelFriendRequest(userId, friendId) {
         const request = await Friend.findOne({
             where: { requester_id: userId, receiver_id: friendId, status: "pending" }

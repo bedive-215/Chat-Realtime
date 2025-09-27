@@ -1,4 +1,5 @@
 import FriendService from "../services/friend.service.js";
+import {io} from "../configs/socketioConf.js";
 
 export const getFriends = async (req, res) => {
   try {
@@ -38,6 +39,9 @@ export const sendFriendRequest = async (req, res) => {
     const friendId = req.params.friendId;
     const { error, result } = await FriendService.sendFriendRequest(req.user.id, friendId);
     if (error) return res.status(error.code || 400).json(error);
+    if(result.notification){
+      io.to(friendId.toString()).emit("newNotification", result.notification);
+    }
     return res.status(201).json(result);
   } catch (err) {
     console.error("sendFriendRequest controller error:", err);
@@ -50,6 +54,9 @@ export const acceptFriendRequest = async (req, res) => {
     const requesterId = req.params.requesterId;
     const { error, result } = await FriendService.acceptFriendRequest(req.user.id, requesterId);
     if (error) return res.status(error.code || 400).json(error);
+    if(result.notification) {
+      io.to(requesterId.toString()).emit("newNotification", result.notification);
+    }
     return res.status(200).json(result);
   } catch (err) {
     console.error("acceptFriendRequest controller error:", err);
@@ -62,6 +69,9 @@ export const rejectFriendRequest = async (req, res) => {
     const requesterId = req.params.requesterId;
     const { error, result } = await FriendService.rejectFriendRequest(req.user.id, requesterId);
     if (error) return res.status(error.code || 400).json(error);
+    if(result.notification) {
+      io.to(requesterId.toString()).emit("newNotification", result.notification);
+    }
     return res.status(200).json(result);
   } catch (err) {
     console.error("rejectFriendRequest controller error:", err);

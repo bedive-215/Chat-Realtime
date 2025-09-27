@@ -82,3 +82,24 @@
 [2025-09-25T13:39:57.448Z] Online friends for user 2 : ["5"]
 [2025-09-25T13:40:01.386Z] A user disconnected rNGHH29VA1cZwdbHAAAH userId: 2
 [2025-09-25T13:40:01.393Z] Online friends for user 2 : ["5"]
+[2025-09-27T12:33:36.003Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  override existing env vars with { override: true }[0m
+[2025-09-27T12:33:36.380Z] chat_realtime
+[2025-09-27T12:33:37.550Z] Server is running on http://localhost:8080
+[2025-09-27T12:33:38.491Z] Connected to MongoDB Atlas
+[2025-09-27T12:34:45.522Z] Redis connected
+[2025-09-27T12:34:59.577Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 version env with Radar: https://dotenvx.com/radar[0m
+[2025-09-27T12:34:59.873Z] chat_realtime
+[2025-09-27T12:35:00.875Z] Server is running on http://localhost:8080
+[2025-09-27T12:35:00.900Z] Redis connected
+[2025-09-27T12:35:01.836Z] Connected to MongoDB Atlas
+[2025-09-27T12:35:28.093Z] A user connected QpTP3F13J1K4t1qCAAAB
+[2025-09-27T12:35:28.115Z] User 5 joined personal room: 5
+[2025-09-27T12:35:28.119Z] Online friends for user 5 : []
+[2025-09-27T12:37:43.259Z] User 5 joining chat 1 with friend 2
+[2025-09-27T12:39:18.507Z] A user connected XDLr0pUZBw9_PRUdAAAD
+[2025-09-27T12:39:18.518Z] User 2 joined personal room: 2
+[2025-09-27T12:39:18.521Z] Online friends for user 2 : ["5"]
+[2025-09-27T12:39:29.438Z] A user disconnected XDLr0pUZBw9_PRUdAAAD userId: 2
+[2025-09-27T12:39:29.449Z] Online friends for user 2 : ["5"]
+[2025-09-27T14:03:20.111Z] A user disconnected QpTP3F13J1K4t1qCAAAB userId: 5
+[2025-09-27T14:03:20.116Z] Online friends for user 5 : []

@@ -82,3 +82,120 @@
 [2025-09-25T13:39:57.448Z] Online friends for user 2 : ["5"]
 [2025-09-25T13:40:01.386Z] A user disconnected rNGHH29VA1cZwdbHAAAH userId: 2
 [2025-09-25T13:40:01.393Z] Online friends for user 2 : ["5"]
+[2025-09-27T12:33:36.003Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  override existing env vars with { override: true }[0m
+[2025-09-27T12:33:36.380Z] chat_realtime
+[2025-09-27T12:33:37.550Z] Server is running on http://localhost:8080
+[2025-09-27T12:33:38.491Z] Connected to MongoDB Atlas
+[2025-09-27T12:34:45.522Z] Redis connected
+[2025-09-27T12:34:59.577Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 version env with Radar: https://dotenvx.com/radar[0m
+[2025-09-27T12:34:59.873Z] chat_realtime
+[2025-09-27T12:35:00.875Z] Server is running on http://localhost:8080
+[2025-09-27T12:35:00.900Z] Redis connected
+[2025-09-27T12:35:01.836Z] Connected to MongoDB Atlas
+[2025-09-27T12:35:28.093Z] A user connected QpTP3F13J1K4t1qCAAAB
+[2025-09-27T12:35:28.115Z] User 5 joined personal room: 5
+[2025-09-27T12:35:28.119Z] Online friends for user 5 : []
+[2025-09-27T12:37:43.259Z] User 5 joining chat 1 with friend 2
+[2025-09-27T12:39:18.507Z] A user connected XDLr0pUZBw9_PRUdAAAD
+[2025-09-27T12:39:18.518Z] User 2 joined personal room: 2
+[2025-09-27T12:39:18.521Z] Online friends for user 2 : ["5"]
+[2025-09-27T12:39:29.438Z] A user disconnected XDLr0pUZBw9_PRUdAAAD userId: 2
+[2025-09-27T12:39:29.449Z] Online friends for user 2 : ["5"]
+[2025-09-27T14:03:20.111Z] A user disconnected QpTP3F13J1K4t1qCAAAB userId: 5
+[2025-09-27T14:03:20.116Z] Online friends for user 5 : []
+[2025-09-28T12:01:01.209Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:01:01.531Z] chat_realtime
+[2025-09-28T12:01:02.570Z] Server is running on http://localhost:8080
+[2025-09-28T12:01:02.595Z] Redis connected
+[2025-09-28T12:01:03.570Z] Connected to MongoDB Atlas
+[2025-09-28T12:01:06.571Z] Fallback DB executed for user: []
+[2025-09-28T12:06:09.850Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:06:10.087Z] chat_realtime
+[2025-09-28T12:06:10.942Z] Server is running on http://localhost:8080
+[2025-09-28T12:06:10.961Z] Redis connected
+[2025-09-28T12:06:11.877Z] Connected to MongoDB Atlas
+[2025-09-28T12:09:06.629Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  suppress all logs with { quiet: true }[0m
+[2025-09-28T12:09:06.817Z] chat_realtime
+[2025-09-28T12:09:07.462Z] Server is running on http://localhost:8080
+[2025-09-28T12:09:07.478Z] Redis connected
+[2025-09-28T12:09:08.369Z] Connected to MongoDB Atlas
+[2025-09-28T12:14:58.015Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`[0m
+[2025-09-28T12:14:58.272Z] chat_realtime
+[2025-09-28T12:14:59.386Z] Server is running on http://localhost:8080
+[2025-09-28T12:14:59.417Z] Redis connected
+[2025-09-28T12:15:00.317Z] Connected to MongoDB Atlas
+[2025-09-28T12:16:28.045Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:16:28.238Z] chat_realtime
+[2025-09-28T12:16:29.048Z] Server is running on http://localhost:8080
+[2025-09-28T12:16:29.067Z] Redis connected
+[2025-09-28T12:16:29.949Z] Connected to MongoDB Atlas
+[2025-09-28T12:17:57.085Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com[0m
+[2025-09-28T12:17:57.264Z] chat_realtime
+[2025-09-28T12:17:58.055Z] Server is running on http://localhost:8080
+[2025-09-28T12:17:58.080Z] Redis connected
+[2025-09-28T12:17:58.968Z] Connected to MongoDB Atlas
+[2025-09-28T12:20:01.137Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:20:01.327Z] chat_realtime
+[2025-09-28T12:20:01.961Z] Server is running on http://localhost:8080
+[2025-09-28T12:20:01.977Z] Redis connected
+[2025-09-28T12:20:02.889Z] Connected to MongoDB Atlas
+[2025-09-28T12:21:47.374Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  enable debug logging with { debug: true }[0m
+[2025-09-28T12:21:47.647Z] chat_realtime
+[2025-09-28T12:21:48.691Z] Server is running on http://localhost:8080
+[2025-09-28T12:21:48.733Z] Redis connected
+[2025-09-28T12:21:49.734Z] Connected to MongoDB Atlas
+[2025-09-28T12:22:17.934Z] Fallback DB executed for user: []
+[2025-09-28T12:27:20.751Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:27:20.950Z] chat_realtime
+[2025-09-28T12:27:21.693Z] Server is running on http://localhost:8080
+[2025-09-28T12:27:21.713Z] Redis connected
+[2025-09-28T12:27:22.554Z] Connected to MongoDB Atlas
+[2025-09-28T12:31:06.093Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }[0m
+[2025-09-28T12:31:06.259Z] chat_realtime
+[2025-09-28T12:31:07.055Z] Server is running on http://localhost:8080
+[2025-09-28T12:31:07.074Z] Redis connected
+[2025-09-28T12:31:07.970Z] Connected to MongoDB Atlas
+[2025-09-28T12:33:52.203Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild[0m
+[2025-09-28T12:33:52.388Z] chat_realtime
+[2025-09-28T12:33:53.045Z] Server is running on http://localhost:8080
+[2025-09-28T12:33:53.067Z] Redis connected
+[2025-09-28T12:33:55.894Z] Connected to MongoDB Atlas
+[2025-09-28T12:34:27.766Z] Fallback DB executed for user: []
+[2025-09-28T12:46:07.817Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:46:08.125Z] chat_realtime
+[2025-09-28T12:46:09.157Z] Server is running on http://localhost:8080
+[2025-09-28T12:46:09.189Z] Redis connected
+[2025-09-28T12:46:10.129Z] Connected to MongoDB Atlas
+[2025-09-28T12:48:43.773Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  override existing env vars with { override: true }[0m
+[2025-09-28T12:48:44.059Z] chat_realtime
+[2025-09-28T12:48:45.003Z] Server is running on http://localhost:8080
+[2025-09-28T12:48:45.021Z] Redis connected
+[2025-09-28T12:48:46.038Z] Connected to MongoDB Atlas
+[2025-09-28T12:51:00.576Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: 📡 observe env with Radar: https://dotenvx.com/radar[0m
+[2025-09-28T12:51:00.808Z] chat_realtime
+[2025-09-28T12:51:01.769Z] Server is running on http://localhost:8080
+[2025-09-28T12:51:01.789Z] Redis connected
+[2025-09-28T12:51:02.609Z] Connected to MongoDB Atlas
+[2025-09-28T12:51:48.065Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }[0m
+[2025-09-28T12:51:48.318Z] chat_realtime
+[2025-09-28T12:51:49.074Z] Server is running on http://localhost:8080
+[2025-09-28T12:51:49.102Z] Redis connected
+[2025-09-28T12:51:49.943Z] Connected to MongoDB Atlas
+[2025-09-28T12:53:10.414Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  write to custom object with { processEnv: myObject }[0m
+[2025-09-28T12:53:10.608Z] chat_realtime
+[2025-09-28T12:53:11.453Z] Server is running on http://localhost:8080
+[2025-09-28T12:53:11.473Z] Redis connected
+[2025-09-28T12:53:12.513Z] Connected to MongoDB Atlas
+[2025-09-28T12:54:35.306Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  suppress all logs with { quiet: true }[0m
+[2025-09-28T12:54:35.485Z] chat_realtime
+[2025-09-28T12:54:36.156Z] Server is running on http://localhost:8080
+[2025-09-28T12:54:36.178Z] Redis connected
+[2025-09-28T12:54:37.042Z] Connected to MongoDB Atlas
+[2025-09-28T13:47:55.401Z] Fallback DB executed for user: []
+[2025-09-28T13:48:22.986Z] Fallback DB executed for user: []
+[2025-09-28T13:52:02.319Z] [dotenv@17.2.1] injecting env (19) from .env [2m-- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }[0m
+[2025-09-28T13:52:02.632Z] chat_realtime
+[2025-09-28T13:52:03.725Z] Server is running on http://localhost:8080
+[2025-09-28T13:52:03.752Z] Redis connected
+[2025-09-28T13:52:04.649Z] Connected to MongoDB Atlas
+[2025-09-28T13:52:25.475Z] Fallback DB executed for user: []

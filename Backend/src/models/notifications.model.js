@@ -1,12 +1,6 @@
 import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema({
-    id: {
-        type: Number,
-        required: true, 
-        unique: true,
-        autoIncrement: true
-    },
     senderId: {
         type: Number,
         required: true

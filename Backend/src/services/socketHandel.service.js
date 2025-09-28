@@ -67,27 +67,4 @@ export default {
             io.to(receiverId.toString()).emit("chatUpdate", chatUpdateData);
         });
     },
-    async sendNotification(socket, io) {
-        socket.on("sendNotification", async ({ receiverId, type, content }) => {
-            try {
-                if (!receiverId || !type) {
-                    console.log("Invalid notification data");
-                    return;
-                }
-                const { error, result } = await notificationService.createNotification(
-                    socket.userId,
-                    receiverId,
-                    type,
-                    content
-                );
-                if (error) {
-                    console.log("Error creating notification:", error);
-                    return;
-                }
-                io.to(receiverId.toString()).emit("newNotification", result.notification);
-            } catch (error) {
-                console.error("Error in sendNotification:", error);
-            }
-        });
-    }
 };

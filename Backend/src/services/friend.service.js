@@ -94,7 +94,6 @@ export default {
         return { friends, friendList };
     },
 
-    // ================== Lấy danh sách bạn ==================
     async getFriends(userId) {
         if (!userId) {
             return {
@@ -127,7 +126,6 @@ export default {
         return { result: friendIdsFromDB, source: "db" };
     },
 
-    // ================== Lấy info bạn bè ==================
     async getFriendsInfo(userId) {
         if (!userId) {
             return {
@@ -147,7 +145,6 @@ export default {
             }
         }
 
-        // === Fallback DB ===
         const { friendList } = await this.fallBackDB(userId);
 
         // Cache vào Redis
@@ -191,12 +188,17 @@ export default {
 
         let notification = null;
         if(request) {
-            notification = await notificationService.createNotification(
-                userId, 
-                friendId, 
-                'friend_request', 
-                `You have a new friend request from ${requester?.username || "Someone"}`
-            );
+            try{
+                notification = await notificationService.createNotification(
+                    userId, 
+                    friendId, 
+                    'friend_request', 
+                    `You have a new friend request from ${requester?.username || "Someone"}`
+                );
+            } catch(err){
+                console.error("Notification creation error:", err);
+                // Không trả về lỗi nếu tạo thông báo thất bại
+            }
         }
         return { result: {request, notification} };
     },
@@ -275,7 +277,6 @@ export default {
         return { result: { message: "Friend request canceled" } };
     },
 
-    // ================== Hủy kết bạn ==================
     async unfriend(userId, friendId) {
         const friendship = await Friend.findOne({
             where: {
@@ -296,4 +297,25 @@ export default {
 
         return { result: { message: "Unfriended successfully" } };
     },
+
+    async getFriendRequests(userId) {
+        try {
+            if (!userId) {
+                return {
+                    error: { code: 400, name: "GetFriendRequestsError", message: "User ID is required" }
+                };
+            }
+            const requests = await Friend.findAll({
+                where: { receiver_id: userId, status: "pending" },
+                include: [
+                    { model: User, as: "requester", attributes: { exclude: ["password"] } }
+                ],
+                order: [["created_at", "DESC"]],
+            });
+            return { result: requests };
+        } catch (err) {
+            console.error("getFriendRequests service error:", err);
+            return { error: { code: 500, name: "ServerError", message: "Internal server error" } };
+        }
+    }
 };

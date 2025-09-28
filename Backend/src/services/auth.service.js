@@ -5,7 +5,6 @@ import { registationValidate, signInValidate } from "../validators/auth.validato
 import { Op } from 'sequelize';
 import redis from '../configs/redisConf.js';
 import friendService from './friend.service.js';
-import { create } from 'domain';
 
 const { User } = models;
 

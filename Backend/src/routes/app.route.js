@@ -4,6 +4,7 @@ import routerAuth from './auth.route.js';
 import routerProfile from './profile.route.js';
 import routerFriend from './friend.route.js';
 import routerChat from './chat.route.js';
+import routerMessage from './message.route.js';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/user', authMiddleware);
 router.use('/user', routerProfile);
 router.use('/user', routerFriend);
 router.use('/user', routerChat);
+router.use('/user', routerMessage);
 
 export default router;

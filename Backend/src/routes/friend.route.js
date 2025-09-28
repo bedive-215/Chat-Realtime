@@ -14,10 +14,10 @@ const router = Router();
 router.get("/friends", getFriends);
 router.get('/friends-info', getFriendsInfo);
 router.get("/friends/requests", getFriendRequests);
-router.post("/friends/request/:friendId", sendFriendRequest);
-router.post("/friends/accept/:requesterId", acceptFriendRequest);
-router.post("/friends/reject/:requesterId", rejectFriendRequest);
-router.post("/friends/cancel/:friendId", cancelFriendRequest);
-router.post("/friends/unfriend/:friendId", unfriend);
+router.post("/friends/:friendId", sendFriendRequest);
+router.patch("/friends/:requesterId", acceptFriendRequest);
+router.delete("/friends/reject/:requesterId", rejectFriendRequest);
+router.delete("/friends/cancel/:friendId", cancelFriendRequest);
+router.delete("/friends/:friendId", unfriend);
 
 export default router;

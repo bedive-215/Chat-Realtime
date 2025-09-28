@@ -8,10 +8,10 @@ export const signUp = async (req, res) => {
     if (error) return res.status(error.code).json(error);
 
     res.cookie("refreshToken", refreshToken, {
-        httpOnly: true, // chặn JS đọc cookie
-        secure: NODE_ENV !== "development", // chỉ bật HTTPS ở production
-        sameSite: "strict", // chống CSRF
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ngày
+        httpOnly: true,
+        secure: NODE_ENV !== "development",
+        sameSite: "strict", 
+        maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
     return res.status(201).json(result);
@@ -23,9 +23,9 @@ export const signIn = async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: NODE_ENV !== "development", // bật HTTPS ở production
-        sameSite: "strict", // chống CSRF
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ngày
+        secure: NODE_ENV !== "development",
+        sameSite: "strict", 
+        maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
     return res.status(200).json(result);
@@ -51,9 +51,9 @@ export const logout = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   try {
+    const newAccessToken = res.locals.newAccessToken;
     return res.status(200).json({
-        user: req.user,
-        newAccessToken: res.getHeader("x-access-token") || null
+        newAccessToken
     });
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);

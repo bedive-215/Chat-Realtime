@@ -9,20 +9,25 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
 async function setUserOnline(userId) {
-  await redis.sadd('online_users', userId);
+  await redis.sAdd("online_users", userId);
 }
 
 async function setUserOffline(userId) {
-  await redis.srem("online_users", userId);
+  await redis.sRem("online_users", userId);
 }
 
-async function getUserOnline() {
-  const onlineFriends = await redis.sinter(`friends:${userId}`, "online_users");
+async function getUserOnline(userId) {
+  const usersOnline = await redis.sMembers("online_users");
+  const userFriends = await redis.sMembers(`friends:${userId}`);
+  const onlineFriends = usersOnline.filter(id => userFriends.includes(id) && id !== userId.toString());
+  console.log("Online friends for user", userId, ":", onlineFriends);
   return onlineFriends;
 }
 
@@ -30,22 +35,33 @@ io.on("connection", async (socket) => {
   console.log("A user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
-
-  if (userId) {
+  if (userId && userId !== "undefined" && userId !== "null") {
+    socket.userId = userId;
     await setUserOnline(userId);
-    await getUserOnline(userId).then((friends) => {
-      socket.emit("getUserOnline", friends);
+
+    socket.join(userId.toString());
+    console.log(`User ${userId} joined personal room: ${userId.toString()}`);
+
+    const friends = await getUserOnline(userId);
+    socket.emit("getUserOnline", friends);
+    friends.forEach(friendId => {
+      io.to(friendId).emit("userOnline", userId);
     });
   }
+
   socketHandelService.joinRoom(socket, io);
   socketHandelService.sendMessage(socket, io);
 
   socket.on("disconnect", async () => {
-    console.log("A user disconnected", socket.id);
-    await setUserOffline(userId);
+    console.log("A user disconnected", socket.id, "userId:", userId);
 
-    const friends = await getUserOnline(userId);
-    socket.emit("getUserOnline", friends);
+    if (userId) {
+      await setUserOffline(userId);
+      const friends = await getUserOnline(userId);
+      friends.forEach(friendId => {
+        io.to(friendId).emit("userOffline", { userId });
+      });
+    }
   });
 });
 

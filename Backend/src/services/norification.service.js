@@ -47,7 +47,7 @@ export default {
                     },
                 };
             }
-            const notification = await Notification.findOne({ id });
+            const notification = await Notification.findOne({ _id: id });
             if (!notification) {
                 return {
                     error: {

@@ -24,19 +24,16 @@ const App = () => {
     }
   }, [checkAuth, accessToken]);
 
-  // Get users when authenticated
   useEffect(() => {
     if (authUser && accessToken) {
       getUser();
     }
   }, [authUser, accessToken, getUser]);
 
-  // FIXED: Initialize socket listeners when user is authenticated
   useEffect(() => {
     if (authUser && accessToken) {
       setupSocketListeners();
       
-      // cleanupSocketListeners on unmount or when user changes
       return () => {
         cleanupSocketListeners();
       };

@@ -12,6 +12,18 @@ const Navbar = () => {
 
   const dropdownRef = useRef(null);
 
+  // 🔹 Hàm format "time ago"
+  const timeAgo = (date) => {
+    const now = new Date();
+    const created = new Date(date);
+    const diff = Math.floor((now - created) / 1000); // seconds
+
+    if (diff < 60) return `${diff} seconds ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+  };
+
   // 🔹 Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event) {
@@ -47,7 +59,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-            {/* 🔔 Notification Bell (giống style setting/profile/logout) */}
+            {/* Notification Bell */}
             <button
               onClick={toggleOpen}
               className="btn btn-sm btn-ghost relative"
@@ -82,23 +94,26 @@ const Navbar = () => {
                     <div
                       key={n._id}
                       className={`px-4 py-2 text-sm cursor-pointer hover:bg-base-200 
-                                 ${!n.isRead ? "bg-blue-50" : ""}`}
+               ${!n.isRead ? "bg-primary/20" : "bg-base-100"}`}
                       onClick={() => markAsRead(n._id)}
                     >
-                      <p className="text-gray-800">{n.message}</p>
-                      <span className="text-xs text-gray-400">
-                        {new Date(n.createdAt).toLocaleString()}
+                      <p className="text-base-content">{n.content}</p>
+                      <span className="text-xs text-neutral text-base-content/50">
+                        {timeAgo(n.createdAt)}
                       </span>
                     </div>
                   ))
                 )}
               </div>
             )}
+
+            {/* Settings */}
             <Link to={"/settings"} className="btn btn-sm gap-2 transition-colors">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Settings</span>
             </Link>
 
+            {/* Profile + Logout */}
             {authUser && (
               <>
                 <Link to={"/profile"} className="btn btn-sm gap-2">
@@ -118,4 +133,5 @@ const Navbar = () => {
     </header>
   );
 };
+
 export default Navbar;

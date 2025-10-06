@@ -10,6 +10,7 @@ export default {
         });
 
         socket.on("leaveChat", async ({ chatId, friendId }) => {
+            console.log(`User ${socket.userId} leaving chat ${chatId} with friend ${friendId}`);
             socket.leave(chatId.toString());
         });
     },
@@ -36,11 +37,7 @@ export default {
             
             io.to(chatId.toString()).emit("newMessage", {
                 ...result,
-                lastMessage: {
-                    id: result.id,
-                    text: lastMessage,
-                    createdAt: new Date().toISOString(),
-                },
+                lastMessage: lastMessage,
             });
             
             const clientsInRoom = await io.in(chatId.toString()).fetchSockets();

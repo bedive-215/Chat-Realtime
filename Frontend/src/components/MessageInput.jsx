@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null); // Thêm state để lưu file
+  const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const { authUser } = useAuthStore();
   const { selectedUser, sendMessage } = useChatStore();

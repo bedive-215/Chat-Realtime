@@ -13,7 +13,7 @@ import { useThemeStore } from "./store/useThemeStore";
 import { useChatStore } from "./store/useChatStore";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, accessToken, initializeSocket } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, accessToken, initializeSocket, connectSocket } = useAuthStore();
   const { theme } = useThemeStore();
   const { getUser, users, setupSocketListeners, cleanupSocketListeners } = useChatStore();
 
@@ -33,7 +33,7 @@ const App = () => {
   useEffect(() => {
     if (authUser && accessToken) {
       setupSocketListeners();
-      
+      connectSocket();
       return () => {
         cleanupSocketListeners();
       };

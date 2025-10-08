@@ -41,6 +41,7 @@ export default {
             });
             
             const clientsInRoom = await io.in(chatId.toString()).fetchSockets();
+
             const receiverInRoom = clientsInRoom.some(
                 (client) => Number(client.userId) === Number(receiverId)
             );
@@ -48,6 +49,7 @@ export default {
             
             if (receiverInRoom) {
                 await redisHelper.resetUnreadCount(receiverId, socket.userId);
+                console.log("Reciver in room");
             }
             
             const unreadCount = receiverInRoom 

@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redisHelper from "../helpers/redis.helper.js";
 import redis from "../configs/redisConf.js";
-import notificationService from "./norification.service.js";
+import notificationService from "./notification.service.js";
 
 const { User, Friend, Chat, ChatParticipant } = models;
 
@@ -192,7 +192,6 @@ export default {
                 );
             } catch (err) {
                 console.error("Notification creation error:", err);
-                // Không trả về lỗi nếu tạo thông báo thất bại
             }
         }
         return { result: { request, notification } };

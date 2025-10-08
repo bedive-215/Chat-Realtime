@@ -7,23 +7,18 @@ import { useAuthStore } from "../store/useAuthStore";
 const Sidebar = () => {
   const { users, getUser, isUsersLoading, selectUser, selectedUser, resetUnread } = useChatStore();
   
-  // Fix 1: Sử dụng selector đơn giản hơn và force re-render
   const onlineUsers = useAuthStore((state) => state.onlineUsers);
   
-  // Debug: Log để kiểm tra
   console.log("Sidebar render - onlineUsers:", onlineUsers);
   
-  // Force re-render khi onlineUsers thay đổi
   const renderKey = JSON.stringify(onlineUsers);
 
-  // Fix 2: Sử dụng useEffect với dependency array rỗng
   useEffect(() => {
     if (typeof getUser === 'function') {
       getUser().catch(console.error);
     }
-  }, []); // Chỉ chạy 1 lần khi component mount
+  }, []);
 
-  // Fix 3: Memoize việc xử lý onlineUsers để tránh tính toán lại không cần thiết
   const processedOnlineUsers = useMemo(() => {
     if (!onlineUsers) return [];
     

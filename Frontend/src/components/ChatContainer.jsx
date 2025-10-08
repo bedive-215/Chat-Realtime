@@ -7,7 +7,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { format, isToday, isYesterday } from "date-fns";
 
 const ChatContainer = () => {
-  const { messages, getMessages, isMessagesLoading, selectedUser, listenMessages } = useChatStore();
+  const { messages, getMessages, isMessagesLoading, selectedUser } = useChatStore();
   const { authUser } = useAuthStore();
 
   const messageEndRef = useRef(null);
@@ -23,10 +23,6 @@ const ChatContainer = () => {
       getMessages(selectedUser.chatId);
     }
   }, [selectedUser?.chatId, getMessages]);
-
-  useEffect(() => {
-    listenMessages();
-  }, [listenMessages]);
 
   useEffect(() => {
     scrollToBottom();

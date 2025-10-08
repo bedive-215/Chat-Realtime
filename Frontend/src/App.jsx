@@ -11,12 +11,13 @@ import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useChatStore } from "./store/useChatStore";
+import { useNotificationStore } from "./store/useNotificationStore";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, accessToken, initializeSocket, connectSocket } = useAuthStore();
   const { theme } = useThemeStore();
   const { getUser, users, setupSocketListeners, cleanupSocketListeners } = useChatStore();
-
+  const { fetchNotifications, NotificationListeners, cleanupNotificationListeners } = useNotificationStore();
   // Check authentication
   useEffect(() => {
     if (!accessToken) {
@@ -32,13 +33,21 @@ const App = () => {
 
   useEffect(() => {
     if (authUser && accessToken) {
-      setupSocketListeners();
       connectSocket();
+      setupSocketListeners();
+      NotificationListeners();
+      fetchNotifications();
+
       return () => {
         cleanupSocketListeners();
+        cleanupNotificationListeners();
       };
     }
-  }, [authUser, accessToken, setupSocketListeners, cleanupSocketListeners]);
+  }, [
+    authUser,
+    accessToken
+  ]);
+
 
   useEffect(() => {
     if (authUser) {

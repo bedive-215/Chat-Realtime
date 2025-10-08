@@ -58,9 +58,6 @@ export default {
 
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
-
-        // Lấy danh sách bạn bè (nếu có)
-        const { result: friends } = await friendService.getFriends(user.id);
         
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);
@@ -69,7 +66,6 @@ export default {
                 name: "UserCreated",
                 message: "Account created successfully",
                 accessToken,
-                friends,
                 user: result
             },
             refreshToken
@@ -131,10 +127,10 @@ export default {
         const result = {...payload, profile_avatar: user.profile_avatar, created_at: user.created_at};
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
-
+        console.log("Generated tokens for user:", user.id);
         // Gọi service getFriends (tự xử lý cache/DB)
         const { result: friends } = await friendService.getFriends(user.id);
-
+        console.log("User's friends:", friends);
         // Lưu refresh token
         await redis.sAdd(`refresh_tokens:${user.id}`, refreshToken);
         await redis.expire(`refresh_tokens:${user.id}`, 60 * 60 * 24 * 30);

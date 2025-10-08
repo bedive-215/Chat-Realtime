@@ -28,7 +28,7 @@ async function getUserOnline(userId) {
   const usersOnline = await redis.sMembers("online_users");
   const userFriends = await redis.sMembers(`friends:${userId}`);
   const onlineFriends = usersOnline.filter(id => userFriends.includes(id) && id !== userId.toString());
-  console.log("Online friends for user", userId, ":", onlineFriends);
+  console.log("Online users:", usersOnline);
   return onlineFriends;
 }
 

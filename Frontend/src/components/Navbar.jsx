@@ -12,7 +12,6 @@ const Navbar = () => {
 
   const dropdownRef = useRef(null);
 
-  // 🔹 Hàm format "time ago"
   const timeAgo = (date) => {
     const now = new Date();
     const created = new Date(date);
@@ -24,7 +23,6 @@ const Navbar = () => {
     return `${Math.floor(diff / 86400)} days ago`;
   };
 
-  // 🔹 Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

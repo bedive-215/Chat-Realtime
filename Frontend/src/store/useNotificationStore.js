@@ -42,16 +42,6 @@ export const useNotificationStore = create((set, get) => ({
     addNotification: (notification) =>
         set((state) => ({ notifications: [notification, ...state.notifications] })),
 
-    listenNotifications: () => {
-        socket.off("newNotification");
-        socket.on("newNotification", (notification) => {
-            set((state) => ({
-                notifications: [notification, ...state.notifications],
-            }));
-            toast.success("New notification received");
-        });
-    },
-
     NotificationListeners: () => {
         socket.removeAllListeners("newNotification");
         socket.on("newNotification", (notification) => {

@@ -126,32 +126,6 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
-    listenMessages: () => {
-        socket.off("newMessage");
-        socket.on("newMessage", (data) => {
-            const { selectedUser, messages } = get();
-
-            if (selectedUser && data.message.chatId === selectedUser.chatId) {
-                if (data.tempId) {
-                    const exists = messages.some((m) => m.id === data.tempId);
-
-                    if (exists) {
-                        set({
-                            messages: messages.map((m) =>
-                                m.id === data.tempId
-                                    ? { ...data.message, pending: false }
-                                    : m
-                            ),
-                        });
-                    } else {
-                        set({ messages: [...messages, data.message] });
-                    }
-                } else {
-                    set({ messages: [...messages, data.message] });
-                }
-            }
-        });
-    },
 
     leaveCurrentChat: () => {
         const { selectedUser } = get();

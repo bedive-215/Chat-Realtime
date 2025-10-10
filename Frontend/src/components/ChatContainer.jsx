@@ -4,7 +4,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { format, isToday, isYesterday } from "date-fns";
+import { formatMessageTime } from "../lib/utils";
 
 const ChatContainer = () => {
   const { messages, getMessages, isMessagesLoading, selectedUser } = useChatStore();
@@ -28,12 +28,6 @@ const ChatContainer = () => {
     scrollToBottom();
   }, [messages]);
 
-  const formatMessageTime = (dateString) => {
-    const date = new Date(dateString);
-    if (isToday(date)) return format(date, "HH:mm");
-    if (isYesterday(date)) return `Hôm qua ${format(date, "HH:mm")}`;
-    return format(date, "dd/MM/yyyy HH:mm");
-  };
 
   const handleScroll = async () => {
     if (!messageListRef.current || isFetchingOld) return;
@@ -113,7 +107,8 @@ const ChatContainer = () => {
                 {/* Nếu có text */}
                 {hasText && (
                   <div
-                    className={`p-2 rounded-lg text-sm ${isMe ? "bg-blue-500 text-white" : "bg-base-200"
+                    className={`p-2 rounded-lg text-sm ${isMe
+                        ? "bg-primary text-primary-content" : "bg-base-200"
                       }`}
                   >
                     {hasText}

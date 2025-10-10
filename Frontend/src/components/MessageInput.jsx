@@ -106,17 +106,17 @@ const MessageInput = () => {
             className="hidden sm:flex btn btn-circle"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Image size={20} className={selectedFile ? "text-emerald-500" : "text-zinc-400"} />
+            <Image size={18} className={selectedFile ? "text-emerald-500" : "text-zinc-400"} />
           </button>
         </div>
         <button
           type="submit"
           disabled={!text.trim() && !selectedFile}
-          className={`btn btn-sm btn-circle ${
+          className={`btn btn-primary h-10 min-h-0 ${
             text.trim() || selectedFile ? "btn-primary" : "btn-disabled"
           }`}
         >
-          <Send size={22} />
+          <Send size={18} />
         </button>
       </form>
     </div>

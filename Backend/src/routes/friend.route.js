@@ -14,7 +14,7 @@ const router = Router();
 router.get("/friends", getFriends);
 router.get('/friends-info', getFriendsInfo);
 router.get("/friends/requests", getFriendRequests);
-router.post("/friends/:friendId", sendFriendRequest);
+router.post("/friends", sendFriendRequest);
 router.patch("/friends/:requesterId", acceptFriendRequest);
 router.delete("/friends/reject/:requesterId", rejectFriendRequest);
 router.delete("/friends/cancel/:friendId", cancelFriendRequest);

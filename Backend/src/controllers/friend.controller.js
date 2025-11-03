@@ -36,7 +36,7 @@ export const getFriendRequests = async (req, res) => {
 
 export const sendFriendRequest = async (req, res) => {
   try {
-    const friendId = Number(req.params.friendId);
+    const friendId = Number(req.body.receiverId);
     const { error, result } = await FriendService.sendFriendRequest(req.user.id, friendId);
     if (error) return res.status(error.code || 400).json(error);
     if(result.notification){

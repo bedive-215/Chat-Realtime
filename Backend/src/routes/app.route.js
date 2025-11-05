@@ -5,6 +5,8 @@ import routerProfile from './profile.route.js';
 import routerFriend from './friend.route.js';
 import routerChat from './chat.route.js';
 import routerMessage from './message.route.js';
+import routerNotification from './notification.route.js';
+import routerSearch from './search.route.js';
 
 const router = Router();
 
@@ -16,5 +18,7 @@ router.use('/user', routerProfile);
 router.use('/user', routerFriend);
 router.use('/user', routerChat);
 router.use('/user', routerMessage);
+router.use('/user', routerNotification);
+router.use('/user', routerSearch);
 
 export default router;

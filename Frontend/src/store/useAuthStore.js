@@ -124,7 +124,7 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       const currentUser = get().authUser;
-            if (socket && socket.connected && currentUser) {
+      if (socket && socket.connected && currentUser) {
         console.log("Notifying server about logout...");
         socket.emit("userLogout", { userId: currentUser.id });
       }
@@ -132,15 +132,15 @@ export const useAuthStore = create((set, get) => ({
 
       get().disconnectSocket();
 
-      set({ 
-        authUser: null, 
-        accessToken: null, 
+      set({
+        authUser: null,
+        accessToken: null,
         friends: [],
-        onlineUsers: [] 
+        onlineUsers: []
       });
-      
+
       clearLocalStorage(["authUser", "friends"]);
-      
+
       delete axiosInstance.defaults.headers.common.Authorization;
 
       console.log("Logout completed successfully");
@@ -148,11 +148,11 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.error("Logout error:", error);
       toast.error(error.response?.data?.message || "Logout failed");
-      
+
       get().disconnectSocket();
-      set({ 
-        authUser: null, 
-        accessToken: null, 
+      set({
+        authUser: null,
+        accessToken: null,
         friends: [],
         onlineUsers: []
       });
@@ -199,7 +199,7 @@ export const useAuthStore = create((set, get) => ({
     socket.off("getUserOnline");
     socket.off("userOnline");
     socket.off("userOffline");
-    
+
     if (socket.connected) {
       socket.disconnect();
     }
@@ -238,5 +238,36 @@ export const useAuthStore = create((set, get) => ({
         socket.emit("getOnlineUsers");
       }
     }, 1000);
+  },
+  addFriend: (friend) => {
+    set((state) => {
+      const alreadyFriend = state.friends.some((f) => f.id === friend.id);
+      const updatedFriends = alreadyFriend
+        ? state.friends
+        : [friend, ...state.friends];
+
+      const updatedOnline = state.onlineUsers.includes(friend.id)
+        ? state.onlineUsers
+        : [...state.onlineUsers, friend.id];
+
+      saveToLocalStorage("friends", updatedFriends);
+      return {
+        friends: updatedFriends,
+        onlineUsers: updatedOnline,
+      };
+    });
+  },
+
+
+  removeFriend: (friendId) => {
+    set((state) => {
+      const updatedFriends = state.friends.filter((f) => f.id !== friendId);
+      const updatedOnline = state.onlineUsers.filter((id) => id !== friendId);
+      saveToLocalStorage("friends", updatedFriends);
+      return {
+        friends: updatedFriends,
+        onlineUsers: updatedOnline,
+      };
+    });
   },
 }));

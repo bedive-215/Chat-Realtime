@@ -47,7 +47,7 @@ export default {
                     },
                 };
             }
-            const notification = await Notification.findOne({ id });
+            const notification = await Notification.findOne({ _id: id });
             if (!notification) {
                 return {
                     error: {
@@ -108,6 +108,47 @@ export default {
                     code: 500,
                     name: "InternalError",
                     message: "Something went wrong while fetching notifications",
+                },
+            };
+        }
+    },
+    async deleteNotification(id) {
+        try {
+            if (!id) {
+                return {
+                    error: {
+                        code: 400,
+                        name: "DeleteNotificationError",
+                        message: "Notification ID is required",
+                    },
+                };
+            }
+
+            const result = await Notification.deleteOne({ _id: id });
+
+            if (result.deletedCount === 0) {
+                return {
+                    error: {
+                        code: 404,
+                        name: "DeleteNotificationError",
+                        message: `No notification found with id ${id}`,
+                    },
+                };
+            }
+
+            return {
+                result: {
+                    name: "DeleteNotificationSuccess",
+                    message: `Deleted notification with id ${id} successfully.`,
+                },
+            };
+        } catch (error) {
+            console.error("Error while deleting notification:", error);
+            return {
+                error: {
+                    code: 500,
+                    name: "InternalError",
+                    message: "Something went wrong while deleting notification.",
                 },
             };
         }

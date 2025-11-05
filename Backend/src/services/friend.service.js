@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import chatService from './chat.service.js';
 import redisHelper from "../helpers/redis.helper.js";
 import redis from "../configs/redisConf.js";
-import notificationService from "./norification.service.js";
+import notificationService from "./notification.service.js";
 
 const { User, Friend, Chat, ChatParticipant } = models;
 
@@ -25,50 +25,51 @@ export default {
             ],
             order: [["created_at", "DESC"]],
         });
-
+        console.log(`Fetched ${friends.length} friends from DB for user ${userId}`);
         const friendList = await Promise.all(
-            friends.map(async f => {
+            friends.map(async (f) => {
                 const friend = f.requester_id === userId ? f.receiver : f.requester;
-                const chat = await Chat.findOne({
+
+                let chatId = null;
+                let lastMessage = null;
+
+                // lấy tất cả chats có 2 participants
+                const allChats = await Chat.findAll({
                     where: { is_group: false },
                     include: [
                         {
                             model: ChatParticipant,
                             as: "participants",
                             attributes: ["user_id"],
-                            required: true
-                        }
-                    ]
+                            required: true,
+                        },
+                    ],
                 });
 
-                let chatId = null;
-                let lastMessage = null;
+                const correctChat = allChats.find((chat) => {
+                    const participantIds = chat.participants.map((p) => p.user_id);
+                    return (
+                        participantIds.length === 2 &&
+                        participantIds.includes(userId) &&
+                        participantIds.includes(friend.id)
+                    );
+                });
 
-                if (chat) {
-                    const allChats = await Chat.findAll({
-                        where: { is_group: false },
-                        include: [
-                            {
-                                model: ChatParticipant,
-                                as: "participants",
-                                attributes: ["user_id"],
-                                required: true
-                            }
-                        ]
-                    });
+                if (correctChat) {
+                    chatId = correctChat.id;
 
-                    const correctChat = allChats.find(chat => {
-                        const participantIds = chat.participants.map(p => p.user_id);
-                        return participantIds.length === 2 &&
-                            participantIds.includes(userId) &&
-                            participantIds.includes(friend.id);
-                    });
+                    // Ép kiểu sang Number nếu DB Mongo lưu là số
+                    lastMessage = await Message.findOne({ chatId: Number(chatId) })
+                        .sort({ createdAt: -1 })
+                        .lean();
+                }
 
-                    if (correctChat) {
-                        chatId = correctChat.id;
-                        lastMessage = await Message.findOne({ chatId })
-                            .sort({ createdAt: -1 })
-                            .lean();
+                let lastMessageText = "No messages yet";
+                if (lastMessage) {
+                    if (lastMessage.content && lastMessage.content.trim() !== "") {
+                        lastMessageText = lastMessage.content;
+                    } else if (lastMessage.image) {
+                        lastMessageText = "image";
                     }
                 }
 
@@ -77,20 +78,12 @@ export default {
                     username: friend.username,
                     profile_avatar: friend.profile_avatar,
                     chatId,
-                    lastMessage: lastMessage
-                        ? {
-                            id: lastMessage._id.toString(),
-                            text: lastMessage.content,
-                            createdAt: lastMessage.createdAt,
-                            image: lastMessage.image || null,
-                        }
-                        : null,
+                    lastMessage: lastMessageText,
                     unreadCount: 0,
                 };
             })
         );
 
-        console.log("Fallback DB executed for user:", friendList);
         return { friends, friendList };
     },
 
@@ -115,12 +108,14 @@ export default {
         const friendIdsFromDB = friends.map(f =>
             f.requester_id === userId ? f.receiver_id : f.requester_id
         );
-
+        console.log(`Fetched ${friendIdsFromDB.length} friend IDs from DB for user ${userId}`);
+        console.log("Friend IDs:", friendIdsFromDB);
         if (friendIdsFromDB.length > 0) {
             const pipeline = redis.multi();
-            pipeline.sAdd(key, ...friendIdsFromDB.map(id => String(id)));
-            pipeline.expire(key, 60 * 60 * 24 * 7); // TTL 7 ngày
-            await pipeline.exec();
+            pipeline.sAdd(key, friendIdsFromDB.map(String));
+            pipeline.expire(key, 60 * 60 * 24 * 7); 
+            const results = await pipeline.exec();
+            console.log("Redis pipeline results:", results);
         }
 
         return { result: friendIdsFromDB, source: "db" };
@@ -187,20 +182,19 @@ export default {
         const request = await Friend.create({ requester_id: userId, receiver_id: friendId, status: "pending" });
 
         let notification = null;
-        if(request) {
-            try{
+        if (request) {
+            try {
                 notification = await notificationService.createNotification(
-                    userId, 
-                    friendId, 
-                    'friend_request', 
+                    userId,
+                    friendId,
+                    'friend_request',
                     `You have a new friend request from ${requester?.username || "Someone"}`
                 );
-            } catch(err){
+            } catch (err) {
                 console.error("Notification creation error:", err);
-                // Không trả về lỗi nếu tạo thông báo thất bại
             }
         }
-        return { result: {request, notification} };
+        return { result: { request, notification } };
     },
 
     async acceptFriendRequest(userId, requesterId) {
@@ -229,13 +223,13 @@ export default {
             await redisHelper.updateFriendshipCache(userId, requesterId, chatId, "accept");
 
             const notification = await notificationService.createNotification(
-                userId, 
+                userId,
                 requesterId,
-                'friend_request_accepted', 
+                'friend_request_accepted',
                 'Your friend request has been accepted by ' + (request.receiver?.username || "Someone")
             );
 
-            return { result:{ request, notification } };
+            return { result: { request, notification } };
         } catch (err) {
             await t.rollback();
             console.error("acceptFriendRequest error:", err);
@@ -255,9 +249,9 @@ export default {
         await request.destroy();
         const receiver = await User.findByPk(userId);
         const notification = await notificationService.createNotification(
-            userId, 
+            userId,
             requesterId,
-            'friend_request_rejected', 
+            'friend_request_rejected',
             'Your friend request has been rejected by ' + (receiver?.username || "Someone")
         );
 

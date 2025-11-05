@@ -16,6 +16,7 @@ const io = new Server(server, {
 });
 
 async function setUserOnline(userId) {
+  console.log("Setting user online:", userId);
   await redis.sAdd("online_users", userId);
 }
 
@@ -27,7 +28,7 @@ async function getUserOnline(userId) {
   const usersOnline = await redis.sMembers("online_users");
   const userFriends = await redis.sMembers(`friends:${userId}`);
   const onlineFriends = usersOnline.filter(id => userFriends.includes(id) && id !== userId.toString());
-  console.log("Online friends for user", userId, ":", onlineFriends);
+  console.log("Online users:", usersOnline);
   return onlineFriends;
 }
 
@@ -35,6 +36,7 @@ io.on("connection", async (socket) => {
   console.log("A user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
+  console.log("User ID from handshake:", userId);
   if (userId && userId !== "undefined" && userId !== "null") {
     socket.userId = userId;
     await setUserOnline(userId);

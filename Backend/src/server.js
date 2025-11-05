@@ -1,4 +1,3 @@
-import "./logs/logger.js";
 import express from "express";
 import router from "./routes/app.route.js";
 import { PORT } from "./helpers/env.helper.js";

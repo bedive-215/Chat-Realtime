@@ -11,11 +11,12 @@ export const useNotificationStore = create((set, get) => ({
     toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
     close: () => set({ isOpen: false }),
 
-    fetchNotifications: async (receiverId) => {
+    fetchNotifications: async () => {
         set({ isLoading: true });
         try {
-            const res = await axiosInstance.get(`/api/notifications/${receiverId}`);
+            const res = await axiosInstance.get(`/user/notifications`);
             set({ notifications: res.data.result.notifications });
+            console.log("Fetched notifications:", res.data.notifications);
         } catch (error) {
             console.log("Error fetching notifications:", error);
             toast.error("Failed to fetch notifications");
@@ -26,7 +27,7 @@ export const useNotificationStore = create((set, get) => ({
 
     markAsRead: async (id) => {
         try {
-            await axiosInstance.patch(`/api/notifications/${id}/read`);
+            await axiosInstance.patch(`/user/notifications/${id}/read`);
             set((state) => ({
                 notifications: state.notifications.map((n) =>
                     n._id === id ? { ...n, isRead: true } : n
@@ -41,17 +42,7 @@ export const useNotificationStore = create((set, get) => ({
     addNotification: (notification) =>
         set((state) => ({ notifications: [notification, ...state.notifications] })),
 
-    listenNotifications: () => {
-        socket.off("newNotification");
-        socket.on("newNotification", (notification) => {
-            set((state) => ({
-                notifications: [notification, ...state.notifications],
-            }));
-            toast.success("New notification received");
-        });
-    },
-
-    setupSocketListeners: () => {
+    NotificationListeners: () => {
         socket.removeAllListeners("newNotification");
         socket.on("newNotification", (notification) => {
             set((state) => ({
@@ -60,7 +51,7 @@ export const useNotificationStore = create((set, get) => ({
         });
     },
 
-    cleanupSocketListeners: () => {
+    cleanupNotificationListeners: () => {
         socket.removeAllListeners("newNotification");
     }
 }));

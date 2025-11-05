@@ -46,7 +46,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backend/seeds/data.sql:/docker-entrypoint-initdb.d/data.sql
+      - ./Database/seeds/data.sql:/docker-entrypoint-initdb.d/data.sql
     networks:
       - chat-network
 

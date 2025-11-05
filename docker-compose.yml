@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  # ---------- Backend Service ----------
+  backend:
+    build: ./backend
+    container_name: chat_backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - chat-network
+
+  # ---------- Frontend Service ----------
+  frontend:
+    build: ./frontend
+    container_name: chat_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://chat_backend:8080
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - chat-network
+
+  # ---------- MySQL Database ----------
+  mysql:
+    image: mysql:8.0
+    container_name: chat_database
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=2105
+      - MYSQL_USER=bedive
+      - MYSQL_PASSWORD=2105
+      - MYSQL_DATABASE=chat_realtime
+      - TZ=Asia/Ho_Chi_Minh
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/seeds/data.sql:/docker-entrypoint-initdb.d/data.sql
+    networks:
+      - chat-network
+
+  # ---------- Redis Cache ----------
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - chat-network
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

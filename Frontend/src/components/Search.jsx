@@ -8,18 +8,18 @@ import toast from "react-hot-toast";
 const SearchPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
-  const [sendingRequest, setSendingRequest] = useState({}); // Track loading state per user
-  const [sentRequests, setSentRequests] = useState(new Set()); // Track sent requests
+  const [sendingRequest, setSendingRequest] = useState({});
+  const [sentRequests, setSentRequests] = useState(new Set());
   const panelRef = useRef(null);
   const inputRef = useRef(null);
   const debounceTimeout = useRef(null);
 
-  const { 
-    searchResults, 
-    isSearching, 
-    searchUsers, 
+  const {
+    searchResults,
+    isSearching,
+    searchUsers,
     clearSearch,
-    pagination 
+    pagination
   } = useSearchStore();
 
   const { friends, onlineUsers, authUser } = useAuthStore();
@@ -61,8 +61,26 @@ const SearchPanel = () => {
 
   // Check if user is friend
   const isFriend = (userId) => {
-    return friends.some(friend => friend.id === userId);
+    if (!friends || friends.length === 0) return false;
+    const target = String(userId);
+
+    const first = friends[0];
+    if (typeof first === "number" || typeof first === "string") {
+      return friends.some((fid) => String(fid) === target);
+    }
+
+    if (typeof first === "object" && first !== null) {
+      return friends.some(
+        (f) =>
+          String(f.id) === target ||
+          String(f.userId) === target ||
+          String(f.friendId) === target
+      );
+    }
+
+    return friends.some((fid) => String(fid) === target);
   };
+
 
   // Check if user is online
   const isOnline = (userId) => {
@@ -88,10 +106,10 @@ const SearchPanel = () => {
 
     try {
       await axiosInstance.post("/user/friends", { receiverId });
-      
+
       // Add to sent requests set
       setSentRequests((prev) => new Set([...prev, receiverId]));
-      
+
       toast.success("Friend request sent!");
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -269,7 +287,7 @@ const SearchPanel = () => {
                   <div className="p-4 text-center text-sm text-base-content/60 border-t border-base-300">
                     Page {pagination.currentPage} of {pagination.totalPages}
                     {pagination.currentPage < pagination.totalPages && (
-                      <button 
+                      <button
                         className="btn btn-sm btn-link"
                         onClick={() => loadMoreResults()}
                       >

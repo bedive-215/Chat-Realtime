@@ -3,12 +3,13 @@ version: "3.9"
 services:
   # ---------- Backend Service ----------
   backend:
-    build: ./backend
+    build: ./Backend
     container_name: chat_backend
+    restart: always
     ports:
       - "8080:8080"
     env_file:
-      - ./backend/.env
+      - ./Backend/.env
     environment:
       - NODE_ENV=production
     depends_on:
@@ -19,12 +20,12 @@ services:
 
   # ---------- Frontend Service ----------
   frontend:
-    build: ./frontend
+    build: ./Frontend
     container_name: chat_frontend
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://chat_backend:8080
+      - VITE_API_URL=http://localhost:8080/api
       - HOST=0.0.0.0
     depends_on:
       - backend
@@ -37,13 +38,15 @@ services:
     container_name: chat_database
     restart: always
     environment:
+      - MYSQL_CHARSET=utf8mb4
+      - MYSQL_COLLATION=utf8mb4_unicode_ci
       - MYSQL_ROOT_PASSWORD=2105
       - MYSQL_USER=bedive
       - MYSQL_PASSWORD=2105
       - MYSQL_DATABASE=chat_realtime
       - TZ=Asia/Ho_Chi_Minh
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./Database/seeds/data.sql:/docker-entrypoint-initdb.d/data.sql
@@ -56,7 +59,7 @@ services:
     container_name: redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6370:6379"
     networks:
       - chat-network
 

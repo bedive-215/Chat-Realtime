@@ -17,4 +17,4 @@ ENV NODE_ENV=production
 EXPOSE 8080
 
 # Start the Express server
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:product"]

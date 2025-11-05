@@ -24,5 +24,6 @@ export const {
     NODE_ENV,
     REDIS_HOST,
     REDIS_PORT,
-    PORT
+    PORT,
+    DB_PORT
 } = process.env;

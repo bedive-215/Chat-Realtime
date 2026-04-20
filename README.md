@@ -1,7 +1,8 @@
 # Chat Realtime ##
 
 A real-time chat application with user authentication, friend requests, messaging, and online/offline status. Built with Socket.IO, Redis, MySQL, and MongoDB, and powered by a modern React + Vite frontend.
-## Frontend inspired by projects from https://github.com/burakorkmez/ ##
+
+Frontend inspired by and partially based on projects by [Burak](https://github.com/burakorkmez). Copyright (c) 2024 Burak.
 
 ---
 
@@ -144,7 +145,13 @@ Then open your browser at: http://localhost:5173
 | `friends_info:{userId}`       | Hash    | Stores metadata for each friend (last message, unread count, etc.) |
 | `refresh_tokens:{userId}`       | String  | Stores refresh token for secure authentication       |
 
-## 6. Quick test ##
+## 6. Preview ##
+
+![Home page](./assets/HomePage.png)
+![Theme page](./assets/Themes.png)
+![Search feature](./assets/Search.png)
+
+## 7. Quick test ##
 
  - Register a new user
  - Send and accept friend requests
@@ -152,5 +159,4 @@ Then open your browser at: http://localhost:5173
  - Observe online/offline status updates
 
 ---
-
 > This project is for learning and educational purposes only.

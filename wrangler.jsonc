@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chat-realtime215",
+  "compatibility_date": "2026-04-13",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "Frontend"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}

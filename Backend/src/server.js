@@ -12,6 +12,7 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",
   "http://frontend:5173",
+  "https://chat-realtime.pages.dev",
 ];
 
 app.use(

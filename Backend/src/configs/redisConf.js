@@ -1,20 +1,33 @@
 import { createClient } from "redis";
-import { REDIS_HOST, REDIS_PORT } from "../helpers/env.helper.js";
+
+import { REDIS_URL } from "../helpers/env.helper.js";
 
 const redis = createClient({
+  url: REDIS_URL,
   socket: {
-    host: REDIS_HOST || "localhost",
-    port: REDIS_PORT || 6379,
+    reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
   },
 });
 
-redis.on("error", (error) => {
-  console.error("Redis error:", error);
+redis.on("connect", () => {
+  console.log("Redis connecting...");
 });
 
-redis.connect()
-  .then(() => console.log("Redis connected"))
-  .catch((err) => console.error("Redis connection failed:", err));
+redis.on("ready", () => {
+  console.log("Redis ready");
+});
 
+redis.on("error", (err) => {
+  console.error("Redis error:", err);
+});
+
+(async () => {
+  try {
+    await redis.connect();
+    console.log("Redis connected");
+  } catch (err) {
+    console.error("Redis connection failed:", err);
+  }
+})();
 
 export default redis;

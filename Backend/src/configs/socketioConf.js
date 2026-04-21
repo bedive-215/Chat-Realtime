@@ -9,19 +9,29 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://chat-realtime.pages.dev/",
+    origin: [
+      "http://localhost:5173",
+      "https://chat-realtime.pages.dev",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
 async function setUserOnline(userId) {
-  console.log("Setting user online:", userId);
-  await redis.sAdd("online_users", userId);
+  try {
+    await redis.sAdd("online_users", userId);
+  } catch (err) {
+    console.error("Redis error:", err);
+  }
 }
 
 async function setUserOffline(userId) {
-  await redis.sRem("online_users", userId);
+  try {
+    await redis.sRem("online_users", userId);
+  } catch (err) {
+    console.error("Redis error:", err);
+  }
 }
 
 async function getUserOnline(userId) {

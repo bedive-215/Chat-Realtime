@@ -13,6 +13,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://frontend:5173",
   "https://chat-realtime.pages.dev",
+  "https://a9f6af03.chat-realtime.pages.dev"
 ];
 
 app.use(
